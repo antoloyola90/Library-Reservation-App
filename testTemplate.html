@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+<head>
+  <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+</head>
+  <body>
+    
+    {% if resourceName %}
+      <b>
+        {{ user }}
+        {{ resourceName }}
+        {{ startTime }}
+        {{ endTime }}
+        {{ tags }}
+      </b>
+    {% endif %}
+    
+    <br>
+  </body>
+</html>
+{% endautoescape %}

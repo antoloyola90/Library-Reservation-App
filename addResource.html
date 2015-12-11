@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+<head>
+  <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+</head>
+  <body>
+    {% if repeatedResource %}
+       <b> This Resource is already defined for this User. If You wish to increase the Capacity then delete the resource and create a new one with more capacity </b>
+    {% endif %}
+    <h2 align="center"> Add a resource </h2>
+    <form action="/addResource" method="post">
+      <p>
+        <label id="resourceName">Resource Name</label>
+        <input type="text" required name="resourceName"  />
+      </p>
+      <p>
+        <label id="startTime">Start Time(HH:MM) </label>
+        <input type="text" required name="startTime" />
+      </p>
+      <p>
+        <label id="endTime">End Time(HH:MM) </label>
+        <input type="text" required name="endTime" />
+      </p>
+      <p>
+        <label id="tags">Tags </label>
+        <input type="text" required name="tags" placeholder="abc, xyz"/>
+      </p>
+      <input type="submit">
+    </form>
+  </body>
+</html>
+{% endautoescape %}
