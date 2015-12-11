@@ -27,7 +27,7 @@
       </tr>  
     {% for e in resources_for_user: %}
       <tr>
-          <td><a href="/resource?{{ e.name }}"> {{ e.name }} </a></t6>
+          <td><a href="/resource?id={{ e.ID }}"> {{ e.name }} </a></t6>
           <td><h6> {{ e.startTime }} to {{ e.endTime }} </h6></t6>
           <td><h6> {{ e.tags }} </h6></td>
       </tr>        
