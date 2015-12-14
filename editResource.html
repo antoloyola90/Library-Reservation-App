@@ -3,22 +3,18 @@
 
 <html>
 <head>
+  <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
 </head>
   <body>
     {% if error %}
        <b> {{ error }} </b>
     {% endif %}
-
-    {% if editResource %}
-      <h2 align="center"> Edit resource </h2>
-    {% else %}  
-      <h2 align="center"> Add a resource </h2>
-    {% endif %}  
-    <form action="/addResource{% if editResource %}?editResource=true&uniqueID={{uniqueID}}{% endif %}" method="post">
+    <h2 align="center"> Add a resource </h2>
+    <form action="/addResource" method="post">
       <p>
         <label id="resourceName">Resource Name</label>
         {% if resourceName %}
-          <input type="text" name="resourceName"  value="{{ resourceName }}" />
+          <input type="text" name="resourceName"  value="{{ resourceName }}"/>
         {% else %}
           <input type="text" name="resourceName"/>
         {% endif %}  

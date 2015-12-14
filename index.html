@@ -2,7 +2,6 @@
 {% autoescape true %}
 <html>
 <head>
-  <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
 
   <style>
     table, th, td {
@@ -27,9 +26,13 @@
       </tr>  
     {% for e in resources_for_user: %}
       <tr>
-          <td><a href="/resource?id={{ e.ID }}"> {{ e.name }} </a></t6>
-          <td><h6> {{ e.startTime }} to {{ e.endTime }} </h6></t6>
-          <td><h6> {{ e.tags }} </h6></td>
+          <td><a href="/resource?uniqueID={{ e.uniqueID }}"> {{ e.name }} </a></t6>
+          <td><h5> {{ e.startHour }}:{{ e.startMinute }}{% if e.startMinute == 0 %}0{% endif %}  {{ e.startAMorPM }} - {{ e.endHour }}:{{ e.endMinute }}{% if e.endMinute == 0 %}0{% endif %}  {{ e.endAMorPM }}  </h5></t6>  
+          <td>
+            {% for x in e.tags: %}
+              <a href="/tags?tag={{ x }}"> {{ x }} </a>&nbsp;
+            {% endfor %}
+          </td>
       </tr>        
     {% endfor %}  
     </table> 

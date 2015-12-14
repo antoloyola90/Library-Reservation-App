@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+<head>
+
+  <style>
+    table, th, td {
+        border: 1px solid black;
+    }
+    th, td {
+        padding: 5px;
+    }
+    th {
+        text-align: center;
+    }
+  </style>
+</head>
+  <body>
+    <h1>Viewing Resources by Tag = "{{ tag }}"</h1>
+    <table width="100%">
+      <tr>
+        <th>Resource Name</th>
+        <th>Availability hours</th>
+        <th>Tags</th>
+      </tr>  
+    {% for resource in resources: %}
+    <tr>
+        <td><a href="/resource?uniqueID={{ resource.uniqueID }}"> {{ resource.name }} </a></t6>
+        <td><h5> {{ resource.startHour }}:{{ resource.startMinute }}{% if resource.startMinute == 0 %}0{% endif %}  {{ resource.startAMorPM }} - {{ resource.endHour }}:{{ resource.endMinute }}{% if resource.endMinute == 0 %}0{% endif %}  {{ resource.endAMorPM }}  </h5></t6>
+        <td>
+          {% for x in resource.tags: %}
+            <a href="/tags?tag={{ x }}"> {{ x }} </a>&nbsp;
+          {% endfor %}
+        </td>
+    </tr>        
+    {% endfor %}
+    </table> 
+    
+    <hr>
+
+    <a href="{{ url|safe }}">{{ url_linktext }}</a>
+
+  </body>
+</html>
+{% endautoescape %}

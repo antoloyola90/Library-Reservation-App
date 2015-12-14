@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+<head>
+
+  <style>
+    table, th, td {
+        border: 1px solid black;
+    }
+    th, td {
+        padding: 5px;
+    }
+    th {
+        text-align: center;
+    }
+  </style>
+</head>
+  <body>
+    <table width="100%">
+      <tr>
+        <th>Resource Name</th>
+        <th>Availability hours</th>
+        <th>Tags</th>
+      </tr>  
+    <tr>
+        <td><a href="/resource?uniqueID={{ resource.uniqueID }}"> {{ resource.name }} </a></t6>
+        <td><h5> {{ resource.startHour }}:{{ resource.startMinute }}{% if resource.startMinute == 0 %}0{% endif %}  {{ resource.startAMorPM }} - {{ resource.endHour }}:{{ resource.endMinute }}{% if resource.endMinute == 0 %}0{% endif %}  {{ resource.endAMorPM }}  </h5></t6>
+        <td><h5> {{ resource.tags }} </h5></td>
+    </tr>        
+    
+    </table> 
+    <hr>
+
+    <hr>
+    
+    <form action="/editResource?uniqueID={{resource.uniqueID}}&resourceName={{resource.name}}&startHour={{resource.startHour}}&startMinute={{resource.startMinute}}&startAMorPM={{resource.startAMorPM}}&endHour={{resource.endHour}}&endMinute={{resource.endMinute}}&endAMorPM={{resource.endAMorPM}}&tags={{resource.tags}}&editResource=true" method="post">
+      <div><input type="submit" value="Edit Resource"></div>
+    </form>
+    
+    <hr>
+
+    <a href="{{ url|safe }}">{{ url_linktext }}</a>
+
+  </body>
+</html>
+{% endautoescape %}
