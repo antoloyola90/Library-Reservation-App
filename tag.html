@@ -25,7 +25,7 @@
       </tr>  
     {% for resource in resources: %}
     <tr>
-        <td><a href="/resource?uniqueID={{ resource.uniqueID }}"> {{ resource.name }} </a></t6>
+        <td><a href="/resource?resourceUniqueID={{ resource.uniqueID }}"> {{ resource.name }} </a></t6>
         <td><h5> {{ resource.startHour }}:{{ resource.startMinute }}{% if resource.startMinute == 0 %}0{% endif %}  {{ resource.startAMorPM }} - {{ resource.endHour }}:{{ resource.endMinute }}{% if resource.endMinute == 0 %}0{% endif %}  {{ resource.endAMorPM }}  </h5></t6>
         <td>
           {% for x in resource.tags: %}

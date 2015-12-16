@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+{% autoescape true %}
+
+<html>
+<head>
+  <style>
+    
+    th.title {
+        width: 20%;
+    }
+
+    th {
+        text-align: left;
+    }
+  </style>
+</head>
+  <body>
+    {% if error %}
+       <b> {{ error }} </b>
+    {% endif %}
+
+    <h2 align="center"> Add a Reservation for: {{ resource.name }} </h2>
+    <h3 style="color:red"> All times are assumed to be in EST </h3>
+    <hr>
+    <form action="/addReservation?resourceUniqueID={{resourceUniqueID}}" method="post">
+      
+    <table width="40%">
+      <tr>
+        <th class="title"></th>
+        <th>Day</th>
+        <th>Month</th>
+        <th>Year</th>
+      </tr>  
+    <tr>
+        <td>Reservation Date </td>
+        <td>
+          <select name="dateDay">
+          {% for x in range(1,32) %}
+            {% if dateDay and dateDay == x %}
+              <option value="{{ x }}" selected>{{ x }}</option>
+            {% else %}  
+              <option value="{{ x }}">{{ x }}</option>
+            {% endif %}
+          {% endfor %}
+          </select>
+        </td>
+        <td>  
+          <select name="dateMonth">
+          {% for x in range(1,13) %}
+             {% if dateMonth and dateMonth == x %}
+              <option value="{{ x }}" selected>{{ x }}</option>
+            {% else %}  
+              <option value="{{ x }}">{{ x }}</option>
+            {% endif %}
+          {% endfor %}
+          </select>
+        </td>
+        <td>
+          <select name="dateYear">
+          {% for x in range(todaysYear,todaysYear+11) %}
+             {% if dateYear and dateYear == x %}
+              <option value="{{ x }}" selected>{{ x }}</option>
+            {% else %}  
+              <option value="{{ x }}">{{ x }}</option>
+            {% endif %}
+          {% endfor %}
+          </select>
+        </td>
+    </tr>
+  </table>
+  <hr>
+  <table width="40%">
+    <tr>
+      <th class="title"></th>
+      <th>Hour</th>
+      <th>Minute</th>
+      <th>AM/PM</th>
+    </tr>  
+    <tr>
+        <td>Start Time </td>
+        <td>
+        <select name="startHour">
+          {% for x in range(1,13) %}
+            {% if startHour and startHour == x %}
+              <option value="{{ x }}" selected>{{ x }}</option>
+            {% else %}  
+              <option value="{{ x }}">{{ x }}</option>
+            {% endif %}  
+          {% endfor %}
+          </select>
+        </td>
+        <td>
+          <select name="startMinute">
+          {% for x in range(0,60,5): %}
+            {% if startMinute and startMinute == x %}
+              <option value="{{ x }}" selected>{{ x }}</option>
+            {% else %}  
+              <option value="{{ x }}">{{ x }}</option>
+            {% endif %} 
+          {% endfor %}
+        </select>
+      </td>
+      <td>
+        <select name="startAMorPM">
+          <option value="AM">AM</option>
+          {% if startAMorPM and startAMorPM == "PM" %}
+            <option value="PM" selected>PM</option>
+          {% else %}  
+            <option value="PM" >PM</option>
+          {% endif %} 
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td>End Time </td>
+        <td>
+        <select name="endHour">
+          {% for x in range(1,13) %}
+            {% if endHour and endHour == x %}
+              <option value="{{ x }}" selected>{{ x }}</option>
+            {% else %}  
+              <option value="{{ x }}">{{ x }}</option>
+            {% endif %}  
+          {% endfor %}
+          </select>
+        </td>
+        <td>
+          <select name="endMinute">
+          {% for x in range(0,60,5): %}
+            {% if endMinute and endMinute == x %}
+              <option value="{{ x }}" selected>{{ x }}</option>
+            {% else %}  
+              <option value="{{ x }}">{{ x }}</option>
+            {% endif %}  
+          {% endfor %}
+        </select>
+      </td>
+      <td>
+        <select name="endAMorPM">
+          <option value="AM">AM</option>
+          {% if endAMorPM and endAMorPM == "PM" %}
+            <option value="PM" selected>PM</option>
+          {% else %}  
+            <option value="PM" >PM</option>
+          {% endif %} 
+        </select>
+      </td>
+    </tr>
+    </table>
+    <hr>
+      <input type="submit">
+    </form>
+  </body>
+</html>
+{% endautoescape %}

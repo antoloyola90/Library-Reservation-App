@@ -1,0 +1,4 @@
+cron:
+- description: update counter
+  url: /crontask
+  schedule: every 1 minutes
