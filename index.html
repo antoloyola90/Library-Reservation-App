@@ -16,6 +16,23 @@
   </style>
 </head>
   <body>
+
+    <table width="100%">
+      <tr>
+        <th>Resource Name</th>
+        <th>Booking Date</th>
+        <th>Booking Time</th>
+      </tr>  
+    {% for e in reservations: %}
+      <tr>
+          <td><a href="/resource?resourceUniqueID={{ e.resourceUniqueID }}"> {{ e.name }} </a></td>
+          <td><b>{{e.dateDay}}</b>/<b>{{e.dateMonth}}</b>/<b>{{e.dateYear}}</b></td>
+          <td><h5> {{ e.startHour }}:{{ e.startMinute }}{% if e.startMinute == 0 %}0{% endif %}  {{ e.startAMorPM }} - {{ e.endHour }}:{{ e.endMinute }}{% if e.endMinute == 0 %}0{% endif %}  {{ e.endAMorPM }}  </h5></td>  
+          
+      </tr>        
+    {% endfor %}  
+    </table>
+
     <hr>
 
     <table width="100%">
@@ -27,7 +44,7 @@
     {% for e in resources_for_user: %}
       <tr>
           <td><a href="/resource?resourceUniqueID={{ e.uniqueID }}"> {{ e.name }} </a></td>
-          <td><h5> {{ e.startHour }}:{{ e.startMinute }}{% if e.startMinute == 0 %}0{% endif %}  {{ e.startAMorPM }} - {{ e.endHour }}:{{ e.endMinute }}{% if e.endMinute == 0 %}0{% endif %}  {{ e.endAMorPM }}  </h5></t6>  
+          <td><h5> {{ e.startHour }}:{{ e.startMinute }}{% if e.startMinute == 0 %}0{% endif %}  {{ e.startAMorPM }} - {{ e.endHour }}:{{ e.endMinute }}{% if e.endMinute == 0 %}0{% endif %}  {{ e.endAMorPM }}  </h5></td>  
           <td>
             {% for x in e.tags: %}
               <a href="/tags?tag={{ x }}"> {{ x }} </a>&nbsp;

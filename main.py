@@ -30,6 +30,7 @@ class Reservation(ndb.Model):
     dateDay = ndb.IntegerProperty()
     dateMonth = ndb.IntegerProperty()
     dateYear = ndb.IntegerProperty()
+    name = ndb.StringProperty(indexed=False)
 
 class Resource(ndb.Model):
     uniqueID = ndb.StringProperty(indexed=True)
@@ -64,7 +65,7 @@ class MainPage(webapp2.RequestHandler):
             uniqueID = self.request.get('uniqueID')
             editResource = self.request.get('editResource')
 
-        resources_for_user = Resource.gql("WHERE user = :1", user)
+        resources_for_user = Resource.gql("")
         index_list = list(resources_for_user)
         
         if not( resourceNameGet == "" ) and sizeInt == len(index_list):
@@ -80,11 +81,35 @@ class MainPage(webapp2.RequestHandler):
             index_list.append(Resource(uniqueID=uniqueID, user=user, name=resourceNameGet, startHour=startHourGet, startMinute=startMinuteGet, startAMorPM=startAMorPMGet, endHour=endHourGet, endMinute=endMinuteGet, endAMorPM=endAMorPMGet, tags=tokens))
 
         index_list.sort(key=lambda x: x.name)
+
+        reservations = list(Reservation.gql("WHERE user = :1", user))
+
+        reservationsToDelete = list()
+        for e in reservations:
+            endHour = e.endHour
+            if e.endAMorPM == 'PM':
+                endHour = e.endHour + 12
+            
+            todaysDate = datetime.datetime.now()
+            delta = datetime.timedelta(hours = 5)
+            todaysDate = todaysDate - delta
+            reservationDateTime = datetime.datetime(e.dateYear, e.dateMonth, e.dateDay, endHour, e.endMinute)
+            if todaysDate > reservationDateTime:
+                reservationsToDelete.append(e)
+
+        for x in reservationsToDelete:
+            reservations = [e for e in reservations if e.uniqueID != x.uniqueID]
+
+        for e in reservations:
+            res = list(Resource.gql("WHERE uniqueID = :1", e.resourceUniqueID))[0]
+            e.name = res.name
+
         template_values = {
             'user': user,
             'url': url,
             'url_linktext': url_linktext,
             'resources_for_user': index_list,
+            'reservations': reservations,
         }
         
         template = JINJA_ENVIRONMENT.get_template('index.html')
