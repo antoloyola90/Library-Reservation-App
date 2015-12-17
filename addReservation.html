@@ -74,13 +74,12 @@
       <th class="title"></th>
       <th>Hour</th>
       <th>Minute</th>
-      <th>AM/PM</th>
     </tr>  
     <tr>
         <td>Start Time </td>
         <td>
         <select name="startHour">
-          {% for x in range(1,13) %}
+          {% for x in range(0,24) %}
             {% if startHour and startHour == x %}
               <option value="{{ x }}" selected>{{ x }}</option>
             {% else %}  
@@ -100,22 +99,12 @@
           {% endfor %}
         </select>
       </td>
-      <td>
-        <select name="startAMorPM">
-          <option value="AM">AM</option>
-          {% if startAMorPM and startAMorPM == "PM" %}
-            <option value="PM" selected>PM</option>
-          {% else %}  
-            <option value="PM" >PM</option>
-          {% endif %} 
-        </select>
-      </td>
     </tr>
     <tr>
       <td>End Time </td>
         <td>
         <select name="endHour">
-          {% for x in range(1,13) %}
+          {% for x in range(0,24) %}
             {% if endHour and endHour == x %}
               <option value="{{ x }}" selected>{{ x }}</option>
             {% else %}  
@@ -133,16 +122,6 @@
               <option value="{{ x }}">{{ x }}</option>
             {% endif %}  
           {% endfor %}
-        </select>
-      </td>
-      <td>
-        <select name="endAMorPM">
-          <option value="AM">AM</option>
-          {% if endAMorPM and endAMorPM == "PM" %}
-            <option value="PM" selected>PM</option>
-          {% else %}  
-            <option value="PM" >PM</option>
-          {% endif %} 
         </select>
       </td>
     </tr>

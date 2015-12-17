@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+<head>
+  <style type="text/css">
+  	textarea {
+   		font-size: 14pt;
+   		font-family: Arial;
+	} 
+  </style>
+</head>
+  <body>
+  	<textarea style="border:none" rows="50" cols="100">
+	    &lt;?xml version="1.0" encoding="UTF-8" ?&gt;
+	    &lt;rss version="2.0"&gt;
+		    &lt;title&gt;{{resource.name}}&lt;/title&gt;
+		    &lt;link&gt;/resource?resourceUniqueID={{resource.uniqueID}}&lt;/link&gt;
+		    &lt;Resource&gt;
+			    &lt;ResourceName&gt;{{resource.name}}&lt;/ResourceName&gt;
+			    &lt;ResourceOwner&gt;{{resource.user}}&gt;/ResourceOwner&gt;
+			    &lt;ResourceTags&gt;
+			    	{% for tag in resource.tags %}
+            			&lt;ResourceTag&gt;{{tag}}&lt;/ResourceTag&gt;
+            		{% endfor %}	
+        		&lt;/ResourceTags&gt;
+        		&lt;Reservations&gt;
+	        		{% for reservation in reservations_for_resource %}
+			            &lt;Reservation&gt;
+			            &lt;ReservedBys&gt;{{reservation.user}}&lt;/ReservedBy&gt;
+			            &lt;StartTime&gt;
+			            	&lt;Format&gt;hh:mm:ss--DD/MM/YY&lt;/Format&gt;
+			            	&lt;Value&gt;{{reservation.startHour}}:{{reservation.startMinute}}:00--{{reservation.dateDay}}/{{reservation.dateMonth}}/{{reservation.dateYear}}&lt;/Value&gt;
+			            &lt;/StartTime&gt;
+			            &lt;EndTime&gt;
+			            	&lt;Format&gt;hh:mm:ss--DD/MM/YY&lt;/Format&gt;
+			            	&lt;Values&gt;{{reservation.endHour}}:{{reservation.endMinute}}:00--{{reservation.dateDay}}/{{reservation.dateMonth}}/{{reservation.dateYear}}&lt;Value&gt;
+			            &lt;/EndTime&gt;
+			            &lt;Reservation&gt;
+			        {% endfor %}
+
+			&lt;/Reservations&gt;
+        		&lt;/Resource&gt;
+        		&lt;/rss&gt;
+	</textarea>
+  </body>
+</html>
+{% endautoescape %}

@@ -23,10 +23,8 @@ class Reservation(ndb.Model):
     resourceUniqueID = ndb.StringProperty(indexed=True)
     startHour = ndb.IntegerProperty(indexed=False)
     startMinute = ndb.IntegerProperty(indexed=False)
-    startAMorPM = ndb.StringProperty(indexed=False)
     endHour = ndb.IntegerProperty(indexed=False)
     endMinute = ndb.IntegerProperty(indexed=False)
-    endAMorPM = ndb.StringProperty(indexed=False)
     dateDay = ndb.IntegerProperty()
     dateMonth = ndb.IntegerProperty()
     dateYear = ndb.IntegerProperty()
@@ -38,10 +36,8 @@ class Resource(ndb.Model):
     name = ndb.StringProperty(indexed=False)
     startHour = ndb.IntegerProperty(indexed=False)
     startMinute = ndb.IntegerProperty(indexed=False)
-    startAMorPM = ndb.StringProperty(indexed=False)
     endHour = ndb.IntegerProperty(indexed=False)
     endMinute = ndb.IntegerProperty(indexed=False)
-    endAMorPM = ndb.StringProperty(indexed=False)
     tags = ndb.StringProperty(repeated=True)
 
 class MainPage(webapp2.RequestHandler):
@@ -56,44 +52,26 @@ class MainPage(webapp2.RequestHandler):
         if not( resourceNameGet == "" ):
             startHourGet = int(self.request.get('startHour'))
             startMinuteGet = int(self.request.get('startMinute'))
-            startAMorPMGet = self.request.get('startAMorPM')
             endHourGet = int(self.request.get('endHour'))
             endMinuteGet = int(self.request.get('endMinute'))
-            endAMorPMGet = self.request.get('endAMorPM')
             tagsGet = self.request.get('tags')
             sizeInt = int(self.request.get('sizeGet'))
             uniqueID = self.request.get('uniqueID')
             editResource = self.request.get('editResource')
 
-        resources_for_user = Resource.gql("")
+        resources_for_user = Resource.gql("WHERE user = :1", user)
         index_list = list(resources_for_user)
         
-        if not( resourceNameGet == "" ) and sizeInt == len(index_list):
-            if(editResource == "true"):
-                numToDelete = 0;
-                for x in index_list:
-                    if x.uniqueID == uniqueID:
-                        break
-                    numToDelete = numToDelete + 1
-                index_list.pop(numToDelete)
-            tokens = tagsGet.split(',')
-            tokens = [ s.strip() for s in tokens ]
-            index_list.append(Resource(uniqueID=uniqueID, user=user, name=resourceNameGet, startHour=startHourGet, startMinute=startMinuteGet, startAMorPM=startAMorPMGet, endHour=endHourGet, endMinute=endMinuteGet, endAMorPM=endAMorPMGet, tags=tokens))
-
         index_list.sort(key=lambda x: x.name)
 
         reservations = list(Reservation.gql("WHERE user = :1", user))
 
         reservationsToDelete = list()
         for e in reservations:
-            endHour = e.endHour
-            if e.endAMorPM == 'PM':
-                endHour = e.endHour + 12
-            
             todaysDate = datetime.datetime.now()
             delta = datetime.timedelta(hours = 5)
             todaysDate = todaysDate - delta
-            reservationDateTime = datetime.datetime(e.dateYear, e.dateMonth, e.dateDay, endHour, e.endMinute)
+            reservationDateTime = datetime.datetime(e.dateYear, e.dateMonth, e.dateDay, e.endHour, e.endMinute)
             if todaysDate > reservationDateTime:
                 reservationsToDelete.append(e)
 
@@ -101,8 +79,27 @@ class MainPage(webapp2.RequestHandler):
             reservations = [e for e in reservations if e.uniqueID != x.uniqueID]
 
         for e in reservations:
-            res = list(Resource.gql("WHERE uniqueID = :1", e.resourceUniqueID))[0]
-            e.name = res.name
+            results = list(Resource.gql("WHERE uniqueID = :1", e.resourceUniqueID))
+            if len(results) > 0:
+                res = results[0]
+                e.name = res.name
+
+        reservations.sort(key = lambda x: (x.dateYear, x.dateMonth, x.dateDay, x.endHour, x.endMinute, x.name))
+
+        allReservations = list(Reservation.gql(""))
+        allResources = list(Resource.gql(""))
+
+        allReservations.sort(key = lambda x: (x.dateYear, x.dateMonth, x.dateDay, x.endHour, x.endMinute, x.name), reverse=True)
+
+        resourcesDone = list()
+        for e in allReservations:
+            for x in allResources:
+                if x.uniqueID == e.resourceUniqueID and x not in resourcesDone:
+                    resourcesDone.append(x)
+
+        for x in allResources:
+            if x not in resourcesDone:
+                resourcesDone.append(x)
 
         template_values = {
             'user': user,
@@ -110,6 +107,7 @@ class MainPage(webapp2.RequestHandler):
             'url_linktext': url_linktext,
             'resources_for_user': index_list,
             'reservations': reservations,
+            'allResources': resourcesDone,
         }
         
         template = JINJA_ENVIRONMENT.get_template('index.html')
@@ -120,18 +118,49 @@ class AddResource(webapp2.RequestHandler):
         user = users.get_current_user()
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
+
+        resourceNameGet = self.request.get('resourceName')
+        if resourceNameGet:
+            startHourGet = int(self.request.get('startHour'))
+            startMinuteGet = int(self.request.get('startMinute'))
+            endHourGet = int(self.request.get('endHour'))
+            endMinuteGet = int(self.request.get('endMinute'))
+            tagsGet = self.request.get('tags')
+            userGet = users.get_current_user()
+            editResource = self.request.get('editResource')
+            uniqueID = self.request.get('uniqueID')
+
+            resource = list(Resource.gql("WHERE uniqueID = :1", uniqueID))[0]
+            tagsList = resource.tags
+
+            tagsList = ','.join(map(str, tagsList)) 
+            logging.info('tagsList:' + str(tagsList))
+
+            template_values = {
+                'resourceName': resourceNameGet,
+                'startHour': startHourGet,
+                'startMinute': startMinuteGet,
+                'endHour': endHourGet,
+                'endMinute': endMinuteGet,
+                'tags': tagsList,
+                'editResource': editResource,
+                'uniqueID': uniqueID,
+            }
+
+        else:
+            template_values = {
+            }
+
         template = JINJA_ENVIRONMENT.get_template('addResource.html')
-        template_values = {}
+        
         self.response.write(template.render(template_values))
 
     def post(self):
         resourceNameGet = self.request.get('resourceName')
         startHourGet = int(self.request.get('startHour'))
         startMinuteGet = int(self.request.get('startMinute'))
-        startAMorPMGet = self.request.get('startAMorPM')
         endHourGet = int(self.request.get('endHour'))
         endMinuteGet = int(self.request.get('endMinute'))
-        endAMorPMGet = self.request.get('endAMorPM')
         tagsGet = self.request.get('tags')
         userGet = users.get_current_user()
         editResource = self.request.get('editResource')
@@ -143,10 +172,8 @@ class AddResource(webapp2.RequestHandler):
               'resourceName': resourceNameGet,
               'startHour': startHourGet,
               'startMinute': startMinuteGet,
-              'startAMorPM': startAMorPMGet,
               'endHour': endHourGet,
               'endMinute': endMinuteGet,
-              'endAMorPM': endAMorPMGet,
               'tags': tagsGet,
               'editResource': editResource,
               'uniqueID': uniqueID,
@@ -155,16 +182,14 @@ class AddResource(webapp2.RequestHandler):
             self.response.write(template.render(template_values))
             return
 
-        if ( startAMorPMGet == 'PM' and endAMorPMGet == 'AM') or (startAMorPMGet == endAMorPMGet and (startHourGet > endHourGet or ( startHourGet == endHourGet and startMinuteGet >= endMinuteGet))):
+        if startHourGet > endHourGet or ( startHourGet == endHourGet and startMinuteGet >= endMinuteGet):
             template_values = {
               'error': 'End Time must be after the Start Time',
               'resourceName': resourceNameGet,
               'startHour': startHourGet,
               'startMinute': startMinuteGet,
-              'startAMorPM': startAMorPMGet,
               'endHour': endHourGet,
               'endMinute': endMinuteGet,
-              'endAMorPM': endAMorPMGet,
               'tags': tagsGet,
               'editResource': editResource,
               'uniqueID': uniqueID,
@@ -173,54 +198,45 @@ class AddResource(webapp2.RequestHandler):
             self.response.write(template.render(template_values))
             return
 
-        repeatedResource = False
         resources_for_user = Resource.gql("WHERE user = :1", userGet)
-        for e in resources_for_user:
-            if e.name == resourceNameGet:
-                repeatedResource = True
-                break
         
         index_list = list(resources_for_user)
-        if repeatedResource:
-            template = JINJA_ENVIRONMENT.get_template('addResource.html')
-            template_values = {
-                'error': 'This Resource is already defined for this User. If You wish to increase the Capacity then delete the resource and create a new one with more capacity',
-                'resourceName': resourceNameGet,
-                'startHour': startHourGet,
-                'startMinute': startMinuteGet,
-                'startAMorPM': startAMorPMGet,
-                'endHour': endHourGet,
-                'endMinute': endMinuteGet,
-                'endAMorPM': endAMorPMGet,
-                'tags': tagsGet,
-                'editResource': editResource,
-                'uniqueID': uniqueID,
-            }
 
-            self.response.write(template.render(template_values))
-        else:
-            if editResource == "true":
+    
+        if editResource == "true":
+            logging.info('uniqueID = ' + uniqueID)
+            resource = Resource.query(Resource.uniqueID == uniqueID).get()
+            resource.name = resourceNameGet
+            resource.startHour = startHourGet
+            resource.startMinute = startMinuteGet
+            resource.endHour = endHourGet
+            resource.endMinute = endMinuteGet
+            logging.info('tagsGet:'+str(tagsGet))
+            logging.info('resource.tags:'+str(resource.tags))
+            if len(tagsGet) > 0:
                 logging.info('uniqueID = ' + uniqueID)
-                resource = Resource.query(Resource.uniqueID == uniqueID).get()
-                resource.name = resourceNameGet
-                resource.startHour = startHourGet
-                resource.startMinute = startMinuteGet
-                resource.startAMorPM = startAMorPMGet
-                resource.endHour = endHourGet
-                resource.endMinute = endMinuteGet
-                resource.endAMorPM = endAMorPMGet
                 tokens = tagsGet.split(',')
                 tokens = [ s.strip() for s in tokens ]
                 resource.tags = tokens
                 resource.put()
-                self.redirect('/?editResource=true&uniqueID='+uniqueID+'&resourceName='+resourceNameGet+'&startHour='+str(startHourGet)+'&startMinute='+str(startMinuteGet)+'&startAMorPM='+startAMorPMGet+'&endHour='+str(endHourGet)+'&endMinute='+str(endMinuteGet)+'&endAMorPM='+endAMorPMGet+'&tags='+tagsGet+'&sizeGet='+str(len(index_list)))
-            else:    
-                uniqueID = str(uuid.uuid4())
+                self.redirect('/notifyUser?value=resourceModified')
+            else:
+                logging.info('uniqueID = ' + uniqueID)
+                resource.put()
+                self.redirect('/notifyUser?value=resourceModified')
+        else:    
+            uniqueID = str(uuid.uuid4())
+            logging.info('tagsGet:'+str(tagsGet))
+            if not(tagsGet is None or tagsGet == ""):
                 tokens = tagsGet.split(',')
                 tokens = [ s.strip() for s in tokens ]
-                resource = Resource(uniqueID=uniqueID, user=userGet, name=resourceNameGet, startHour=startHourGet, startMinute=startMinuteGet, startAMorPM=startAMorPMGet, endHour=endHourGet, endMinute=endMinuteGet, endAMorPM=endAMorPMGet, tags=tokens)
+                resource = Resource(uniqueID=uniqueID, user=userGet, name=resourceNameGet, startHour=startHourGet, startMinute=startMinuteGet, endHour=endHourGet, endMinute=endMinuteGet, tags=tokens)
                 resource.put()
-                self.redirect('/?uniqueID='+uniqueID+'&resourceName='+resourceNameGet+'&startHour='+str(startHourGet)+'&startMinute='+str(startMinuteGet)+'&startAMorPM='+startAMorPMGet+'&endHour='+str(endHourGet)+'&endMinute='+str(endMinuteGet)+'&endAMorPM='+endAMorPMGet+'&tags='+tagsGet+'&sizeGet='+str(len(index_list)))
+                self.redirect('/notifyUser?value=resourceAdded')
+            else:
+                resource = Resource(uniqueID=uniqueID, user=userGet, name=resourceNameGet, startHour=startHourGet, startMinute=startMinuteGet, endHour=endHourGet, endMinute=endMinuteGet)
+                resource.put()
+                self.redirect('/notifyUser?value=resourceAdded')
 
 class AddReservation(webapp2.RequestHandler):
     def get(self):
@@ -242,10 +258,8 @@ class AddReservation(webapp2.RequestHandler):
         year = int(time.strftime("%Y"))
         startHourGet = int(self.request.get('startHour'))
         startMinuteGet = int(self.request.get('startMinute'))
-        startAMorPMGet = self.request.get('startAMorPM')
         endHourGet = int(self.request.get('endHour'))
         endMinuteGet = int(self.request.get('endMinute'))
-        endAMorPMGet = self.request.get('endAMorPM')
         dateYearGet = int(self.request.get('dateYear'))
         dateMonthGet = int(self.request.get('dateMonth'))
         dateDayGet = int(self.request.get('dateDay'))
@@ -254,15 +268,13 @@ class AddReservation(webapp2.RequestHandler):
 
         resource = list(Resource.gql("WHERE uniqueID = :1", resourceUniqueID))[0]
 
-        if ( startAMorPMGet == 'PM' and endAMorPMGet == 'AM') or (startAMorPMGet == endAMorPMGet and (startHourGet > endHourGet or ( startHourGet == endHourGet and startMinuteGet >= endMinuteGet))):
+        if startHourGet > endHourGet or ( startHourGet == endHourGet and startMinuteGet >= endMinuteGet):
             template_values = {
               'error': 'End Time must be after the Start Time',
               'startHour': startHourGet,
               'startMinute': startMinuteGet,
-              'startAMorPM': startAMorPMGet,
               'endHour': endHourGet,
               'endMinute': endMinuteGet,
-              'endAMorPM': endAMorPMGet,
               'dateYear': dateYearGet,
               'dateMonth': dateMonthGet,
               'dateDay': dateDayGet,
@@ -275,25 +287,16 @@ class AddReservation(webapp2.RequestHandler):
             return
 
         try:
-            changeBy12 = startHourGet
-            if startAMorPMGet == 'PM':
-                changeBy12 = startHourGet + 12
-            requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, changeBy12, startMinuteGet)
-
-            changeBy12 = endHourGet
-            if endAMorPMGet == 'PM':
-                changeBy12 = endHourGet + 12
-            requestReservationEndTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, changeBy12, endMinuteGet)
+            requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, startHourGet, startMinuteGet)
+            requestReservationEndTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, endHourGet, endMinuteGet)
 
         except ValueError:
             template_values = {
               'error': 'Date is incorrect! :)',
               'startHour': startHourGet,
               'startMinute': startMinuteGet,
-              'startAMorPM': startAMorPMGet,
               'endHour': endHourGet,
               'endMinute': endMinuteGet,
-              'endAMorPM': endAMorPMGet,
               'dateYear': dateYearGet,
               'dateMonth': dateMonthGet,
               'dateDay': dateDayGet,
@@ -305,10 +308,32 @@ class AddReservation(webapp2.RequestHandler):
             self.response.write(template.render(template_values))
             return
 
-        changeBy12 = startHourGet
-        if startAMorPMGet == 'PM':
-            changeBy12 = startHourGet + 12
-        requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, changeBy12, startMinuteGet)
+        resource = list(Resource.gql("WHERE uniqueID = :1", resourceUniqueID))[0]
+
+        requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, startHourGet, startMinuteGet)
+        requestReservationEndTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, endHourGet, endMinuteGet)
+        resourceStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, resource.startHour, resource.startMinute)
+        resourceEndTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, resource.endHour, resource.endMinute)
+
+        if requestReservationStartTime < resourceStartTime or requestReservationEndTime > resourceEndTime:
+            template_values = {
+              'error': 'Resource is not available during those times!',
+              'startHour': startHourGet,
+              'startMinute': startMinuteGet,
+              'endHour': endHourGet,
+              'endMinute': endMinuteGet,
+              'dateYear': dateYearGet,
+              'dateMonth': dateMonthGet,
+              'dateDay': dateDayGet,
+              'resourceUniqueID': resourceUniqueID,
+              'resource': resource,
+              'todaysYear':year,
+            }
+            template = JINJA_ENVIRONMENT.get_template('addReservation.html')
+            self.response.write(template.render(template_values))
+            return
+
+        requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, startHourGet, startMinuteGet)
 
         todaysDate = datetime.datetime.now()
         delta = datetime.timedelta(hours = 5)
@@ -319,10 +344,8 @@ class AddReservation(webapp2.RequestHandler):
               'error': 'Choose a time after the NOW! :)',
               'startHour': startHourGet,
               'startMinute': startMinuteGet,
-              'startAMorPM': startAMorPMGet,
               'endHour': endHourGet,
               'endMinute': endMinuteGet,
-              'endAMorPM': endAMorPMGet,
               'dateYear': dateYearGet,
               'dateMonth': dateMonthGet,
               'dateDay': dateDayGet,
@@ -337,25 +360,10 @@ class AddReservation(webapp2.RequestHandler):
         overlapReservation = False
         reservations_for_resource = Reservation.gql("WHERE resourceUniqueID = :1 AND dateYear = :2 AND dateMonth = :3 AND dateDay = :4", resourceUniqueID, dateYearGet, dateMonthGet, dateDayGet)
         for e in reservations_for_resource:
-            changeBy12 = e.startHour
-            if e.startAMorPM == 'PM':
-                changeBy12 = e.startHour + 12
-            reservationStart = datetime.datetime(e.dateYear, e.dateMonth, e.dateDay, changeBy12, e.startMinute)
-            
-            changeBy12 = e.endHour
-            if e.endAMorPM == 'PM':
-                changeBy12 = e.endHour + 12
-            reservationEnd = datetime.datetime(e.dateYear, e.dateMonth, e.dateDay, changeBy12, e.endMinute)
-
-            changeBy12 = startHourGet
-            if startAMorPMGet == 'PM':
-                changeBy12 = startHourGet + 12
-            requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, changeBy12, startMinuteGet)
-
-            changeBy12 = endHourGet
-            if endAMorPMGet == 'PM':
-                changeBy12 = endHourGet + 12
-            requestReservationEndTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, changeBy12, endMinuteGet)
+            reservationStart = datetime.datetime(e.dateYear, e.dateMonth, e.dateDay, e.startHour, e.startMinute)
+            reservationEnd = datetime.datetime(e.dateYear, e.dateMonth, e.dateDay, e.endHour, e.endMinute) - datetime.timedelta(seconds = 60)
+            requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, startHourGet, startMinuteGet)
+            requestReservationEndTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, endHourGet, endMinuteGet) - datetime.timedelta(seconds = 60)
             
             overlap = reservationStart <= requestReservationEndTime and reservationEnd >= requestReservationStartTime
             
@@ -370,10 +378,8 @@ class AddReservation(webapp2.RequestHandler):
                 'error': 'This Reservation is not available for that time range.',
                 'startHour': startHourGet,
                 'startMinute': startMinuteGet,
-                'startAMorPM': startAMorPMGet,
                 'endHour': endHourGet,
                 'endMinute': endMinuteGet,
-                'endAMorPM': endAMorPMGet,
                 'dateYear': dateYearGet,
                 'dateMonth': dateMonthGet,
                 'dateDay': dateDayGet,
@@ -385,9 +391,19 @@ class AddReservation(webapp2.RequestHandler):
             self.response.write(template.render(template_values))
         else:
             uniqueID = str(uuid.uuid4())
-            reservation = Reservation(uniqueID=uniqueID, user=userGet, resourceUniqueID=resourceUniqueID, startHour=startHourGet, startMinute=startMinuteGet, startAMorPM=startAMorPMGet, endHour=endHourGet, endMinute=endMinuteGet, endAMorPM=endAMorPMGet, dateDay=dateDayGet, dateMonth=dateMonthGet, dateYear=dateYearGet)
+            reservation = Reservation(uniqueID=uniqueID, user=userGet, resourceUniqueID=resourceUniqueID, startHour=startHourGet, startMinute=startMinuteGet, endHour=endHourGet, endMinute=endMinuteGet, dateDay=dateDayGet, dateMonth=dateMonthGet, dateYear=dateYearGet)
             reservation.put()
-            self.redirect('/resource?reservationUniqueID='+uniqueID+'&resourceUniqueID='+resourceUniqueID+'&startHour='+str(startHourGet)+'&startMinute='+str(startMinuteGet)+'&startAMorPM='+startAMorPMGet+'&endHour='+str(endHourGet)+'&endMinute='+str(endMinuteGet)+'&endAMorPM='+endAMorPMGet+'&dateDay='+str(dateDayGet)+'&dateMonth='+str(dateMonthGet)+'&dateYear='+str(dateYearGet)+'&sizeGet='+str(len(index_list)))
+            self.redirect('/notifyUser?value=reservationAdded')
+
+class NotifyUser(webapp2.RequestHandler):
+    def get(self):
+        value = self.request.get('value')
+        template_values = {
+            'value': value,
+        }
+        template = JINJA_ENVIRONMENT.get_template('notifyUser.html')
+        self.response.write(template.render(template_values))
+
 
 class ViewResource(webapp2.RequestHandler):
     def get(self):
@@ -395,7 +411,9 @@ class ViewResource(webapp2.RequestHandler):
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
 
+        reservationUniqueID = self.request.get('reservationUniqueID')
         resourceUniqueID = self.request.get('resourceUniqueID')
+        
         resource = list(Resource.gql("WHERE uniqueID = :1", resourceUniqueID))[0]
 
         reservationUniqueID = self.request.get('reservationUniqueID')
@@ -403,14 +421,10 @@ class ViewResource(webapp2.RequestHandler):
 
         reservationsToDelete = list()
         for e in reservations_for_resource:
-            endHour = e.endHour
-            if e.endAMorPM == 'PM':
-                endHour = e.endHour + 12
-            
             todaysDate = datetime.datetime.now()
             delta = datetime.timedelta(hours = 5)
             todaysDate = todaysDate - delta
-            reservationDateTime = datetime.datetime(e.dateYear, e.dateMonth, e.dateDay, endHour, e.endMinute)
+            reservationDateTime = datetime.datetime(e.dateYear, e.dateMonth, e.dateDay, e.endHour, e.endMinute)
             if todaysDate > reservationDateTime:
                 reservationsToDelete.append(e)
 
@@ -418,9 +432,18 @@ class ViewResource(webapp2.RequestHandler):
             reservations_for_resource = [e for e in reservations_for_resource if e.uniqueID != x.uniqueID]
 
         template = JINJA_ENVIRONMENT.get_template('resource.html')
+
+        tagsWork = True
+        if len(resource.tags) == 0:
+            tagsWork = False
+
+        editActive = user == resource.user
+        logging.info('editActive:'+str(editActive))
         template_values = {
             'resource': resource,
             'reservations': reservations_for_resource,
+            'tagsWork': tagsWork,
+            'editActive': str(editActive),
         }
         self.response.write(template.render(template_values))
 
@@ -455,6 +478,19 @@ class CronTasker(webapp2.RequestHandler):
     def get(self):
         val = 1
 
+class GenerateRSS(webapp2.RequestHandler):
+    def get(self):
+        resourceUniqueID = self.request.get('resourceUniqueID')
+        resource = list(Resource.gql("WHERE uniqueID = :1", resourceUniqueID))[0]
+        reservations_for_resource = list(Reservation.gql("WHERE resourceUniqueID = :1", resourceUniqueID))
+
+        template = JINJA_ENVIRONMENT.get_template('rssGenerator.html')
+        template_values = {
+            'resource': resource,
+            'reservations_for_resource': reservations_for_resource,
+        }  
+        self.response.write(template.render(template_values))
+
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/addResource', AddResource),
@@ -463,4 +499,6 @@ app = webapp2.WSGIApplication([
     ('/editResource', AddResource),
     ('/tags', ViewByTag),
     ('/crontask', CronTasker),
+    ('/notifyUser', NotifyUser),
+    ('/generateRSS', GenerateRSS),
 ], debug=True)

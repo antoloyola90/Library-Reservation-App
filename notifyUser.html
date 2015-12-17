@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+<head>
+
+</head>
+  <body>
+  	{% if value == "resourceAdded" %}
+    	<h1>Resource has been Added!</h1>
+    {% elif value == "resourceModified" %}
+    	<h1>Resource has been modified!</h1>
+    {% elif value == "reservationAdded" %}
+    	<h1>Reservation has been added!</h1>
+    {% endif %}
+    <hr>
+    <form action="/" method="get">
+      <div><input type="submit" value="Return to Main Page"></div>
+    </form>
+    <hr>
+  </body>
+</html>
+{% endautoescape %}

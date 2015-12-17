@@ -16,7 +16,7 @@
   </style>
 </head>
   <body>
-
+    <h2>Reservations by: {{user}}</h2>
     <table width="100%">
       <tr>
         <th>Resource Name</th>
@@ -25,16 +25,39 @@
       </tr>  
     {% for e in reservations: %}
       <tr>
-          <td><a href="/resource?resourceUniqueID={{ e.resourceUniqueID }}"> {{ e.name }} </a></td>
+          <td><a href="/resource?resourceUniqueID={{ e.resourceUniqueID }}"> {{ e.name }} </a><a href="/generateRSS?resourceUniqueID={{ e.resourceUniqueID }}"> <img src="images/rssImage.jpg" alt="Rss Feed" height="20" width="20"</a></td>
           <td><b>{{e.dateDay}}</b>/<b>{{e.dateMonth}}</b>/<b>{{e.dateYear}}</b></td>
-          <td><h5> {{ e.startHour }}:{{ e.startMinute }}{% if e.startMinute == 0 %}0{% endif %}  {{ e.startAMorPM }} - {{ e.endHour }}:{{ e.endMinute }}{% if e.endMinute == 0 %}0{% endif %}  {{ e.endAMorPM }}  </h5></td>  
+          <td><h5> {{ e.startHour }}:{{ e.startMinute }}{% if e.startMinute == 0 %}0{% endif %} - {{ e.endHour }}:{{ e.endMinute }}{% if e.endMinute == 0 %}0{% endif %} </h5></td>  
           
       </tr>        
     {% endfor %}  
     </table>
 
     <hr>
+      <h2>All Resources Available:</h2>
+      <table width="100%">
+      <tr>
+        <th>Resource Name</th>
+        <th>Availability hours</th>
+        <th>Tags</th>
+      </tr>  
+      {% for e in allResources: %}
+      <tr>
+          <td><a href="/resource?resourceUniqueID={{ e.uniqueID }}"> {{ e.name }} </a> <a href="/generateRSS?resourceUniqueID={{ e.uniqueID }}"> <img src="images/rssImage.jpg" alt="Rss Feed" height="20" width="20"</a></td>
+          <td><h5> {{ e.startHour }}:{{ e.startMinute }}{% if e.startMinute == 0 %}0{% endif %} - {{ e.endHour }}:{{ e.endMinute }}{% if e.endMinute == 0 %}0{% endif %} </h5></td>  
+          <td>
+            {% for x in e.tags: %}
+              {% if x != "" %}
+                <a href="/tags?tag={{ x }}"> {{ x }} </a>&nbsp;
+              {% endif %}
+            {% endfor %}
+          </td>
+      </tr>        
+      {% endfor %} 
+    </table>
+    <hr>
 
+    <h2>Resources owned by: {{user}}</h2>
     <table width="100%">
       <tr>
         <th>Resource Name</th>
@@ -43,11 +66,13 @@
       </tr>  
     {% for e in resources_for_user: %}
       <tr>
-          <td><a href="/resource?resourceUniqueID={{ e.uniqueID }}"> {{ e.name }} </a></td>
-          <td><h5> {{ e.startHour }}:{{ e.startMinute }}{% if e.startMinute == 0 %}0{% endif %}  {{ e.startAMorPM }} - {{ e.endHour }}:{{ e.endMinute }}{% if e.endMinute == 0 %}0{% endif %}  {{ e.endAMorPM }}  </h5></td>  
+          <td><a href="/resource?resourceUniqueID={{ e.uniqueID }}"> {{ e.name }} </a> <a href="/generateRSS?resourceUniqueID={{ e.uniqueID }}"> <img src="images/rssImage.jpg" alt="Rss Feed" height="20" width="20"</a></td>
+          <td><h5> {{ e.startHour }}:{{ e.startMinute }}{% if e.startMinute == 0 %}0{% endif %} - {{ e.endHour }}:{{ e.endMinute }}{% if e.endMinute == 0 %}0{% endif %} </h5></td>  
           <td>
             {% for x in e.tags: %}
-              <a href="/tags?tag={{ x }}"> {{ x }} </a>&nbsp;
+              {% if x != "" %}
+                <a href="/tags?tag={{ x }}"> {{ x }} </a>&nbsp;
+              {% endif %}
             {% endfor %}
           </td>
       </tr>        

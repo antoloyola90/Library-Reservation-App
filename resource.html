@@ -23,8 +23,8 @@
         <th>Tags</th>
       </tr>  
     <tr>
-        <td><a href="/resource?resourceUniqueID={{ resource.uniqueID }}"> {{ resource.name }} </a></t6>
-        <td><h5> {{ resource.startHour }}:{{ resource.startMinute }}{% if resource.startMinute == 0 %}0{% endif %}  {{ resource.startAMorPM }} - {{ resource.endHour }}:{{ resource.endMinute }}{% if resource.endMinute == 0 %}0{% endif %}  {{ resource.endAMorPM }}  </h5></t6>
+        <td><a href="/resource?resourceUniqueID={{ resource.uniqueID }}"> {{ resource.name }} </a><a href="/generateRSS?resourceUniqueID={{ resource.uniqueID }}"> <img src="images/rssImage.jpg" alt="Rss Feed" height="20" width="20"</a></t6>
+        <td><h5> {{ resource.startHour }}:{{ resource.startMinute }}{% if resource.startMinute == 0 %}0{% endif %}  - {{ resource.endHour }}:{{ resource.endMinute }}{% if resource.endMinute == 0 %}0{% endif %}  </h5></td>
         <td>
           {% for x in resource.tags: %}
             <a href="/tags?tag={{ x }}"> {{ x }} </a>&nbsp;
@@ -58,9 +58,21 @@
     </form>
     <hr>
     
-    <form action="/editResource?uniqueID={{resource.uniqueID}}&resourceName={{resource.name}}&startHour={{resource.startHour}}&startMinute={{resource.startMinute}}&startAMorPM={{resource.startAMorPM}}&endHour={{resource.endHour}}&endMinute={{resource.endMinute}}&endAMorPM={{resource.endAMorPM}}&tags={{resource.tags}}&editResource=true" method="post">
-      <div><input type="submit" value="Edit Resource"></div>
-    </form>
+    {% if editActive=="True" %}
+      <form action="/editResource" method="get">
+        <input type="hidden" name="editResource" value="true">
+        <input type="hidden" name="uniqueID" value="{{resource.uniqueID}}">
+        <input type="hidden" name="resourceName" value="{{resource.name}}">
+        <input type="hidden" name="startHour" value="{{resource.startHour}}">
+        <input type="hidden" name="startMinute" value="{{resource.startMinute}}">
+        <input type="hidden" name="endHour" value="{{resource.endHour}}">
+        <input type="hidden" name="endMinute" value="{{resource.endMinute}}">
+        {% if tagsWork == "True" %}
+          <input type="hidden" name="tags" value="{{resource.tags}}">
+        {% endif %}
+        <div><input type="submit" value="Edit Resource"></div>
+      </form>
+    {% endif %}
     
     <hr>
 
