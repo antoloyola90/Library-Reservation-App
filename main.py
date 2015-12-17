@@ -49,9 +49,9 @@ class MainPage(webapp2.RequestHandler):
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
 
+        showUsers = self.request.get('showUsers')
         resourceNameGet = self.request.get('resourceName')
         if not( resourceNameGet == "" ):
-            startHourGet = int(self.request.get('startHour'))
             startMinuteGet = int(self.request.get('startMinute'))
             endHourGet = int(self.request.get('endHour'))
             endMinuteGet = int(self.request.get('endMinute'))
@@ -59,6 +59,7 @@ class MainPage(webapp2.RequestHandler):
             sizeInt = int(self.request.get('sizeGet'))
             uniqueID = self.request.get('uniqueID')
             editResource = self.request.get('editResource')
+            startHourGet = int(self.request.get('startHour'))
 
         resources_for_user = Resource.gql("WHERE user = :1", user)
         index_list = list(resources_for_user)
@@ -109,6 +110,7 @@ class MainPage(webapp2.RequestHandler):
             'resources_for_user': index_list,
             'reservations': reservations,
             'allResources': resourcesDone,
+            'showUsers': str(showUsers),
         }
         
         template = JINJA_ENVIRONMENT.get_template('index.html')
@@ -135,8 +137,7 @@ class AddResource(webapp2.RequestHandler):
             tagsList = resource.tags
 
             tagsList = ','.join(map(str, tagsList)) 
-            logging.info('tagsList:' + str(tagsList))
-
+        
             template_values = {
                 'resourceName': resourceNameGet,
                 'startHour': startHourGet,
@@ -205,29 +206,23 @@ class AddResource(webapp2.RequestHandler):
 
     
         if editResource == "true":
-            logging.info('uniqueID = ' + uniqueID)
             resource = Resource.query(Resource.uniqueID == uniqueID).get()
             resource.name = resourceNameGet
             resource.startHour = startHourGet
             resource.startMinute = startMinuteGet
             resource.endHour = endHourGet
             resource.endMinute = endMinuteGet
-            logging.info('tagsGet:'+str(tagsGet))
-            logging.info('resource.tags:'+str(resource.tags))
             if len(tagsGet) > 0:
-                logging.info('uniqueID = ' + uniqueID)
                 tokens = tagsGet.split(',')
                 tokens = [ s.strip() for s in tokens ]
                 resource.tags = tokens
                 resource.put()
                 self.redirect('/notifyUser?value=resourceModified')
             else:
-                logging.info('uniqueID = ' + uniqueID)
                 resource.put()
                 self.redirect('/notifyUser?value=resourceModified')
         else:    
             uniqueID = str(uuid.uuid4())
-            logging.info('tagsGet:'+str(tagsGet))
             if not(tagsGet is None or tagsGet == ""):
                 tokens = tagsGet.split(',')
                 tokens = [ s.strip() for s in tokens ]
@@ -423,7 +418,6 @@ class ViewResource(webapp2.RequestHandler):
             tagsWork = False
 
         editActive = user == resource.user
-        logging.info('editActive:'+str(editActive))
         template_values = {
             'resource': resource,
             'reservations': reservations_for_resource,
@@ -431,6 +425,22 @@ class ViewResource(webapp2.RequestHandler):
             'editActive': str(editActive),
         }
         self.response.write(template.render(template_values))
+
+class DeleteReservation(webapp2.RequestHandler):
+    def get(self):
+        reservationUniqueID = self.request.get('reservationUniqueID')
+        user = users.get_current_user()
+        if user is None:
+            self.redirect(users.create_login_url(self.request.uri))
+
+        reservation = Reservation.query(Reservation.uniqueID == reservationUniqueID).get()
+
+        if user != reservation.user:
+            self.redirect('/notifyUser?value=reservationNotUser')
+            return
+
+        reservation.key.delete()
+        self.redirect('/notifyUser?value=reservationDeleted')
 
 class ViewByTag(webapp2.RequestHandler):
     def get(self):
@@ -486,4 +496,5 @@ app = webapp2.WSGIApplication([
     ('/crontask', CronTasker),
     ('/notifyUser', NotifyUser),
     ('/generateRSS', GenerateRSS),
+    ('/deleteReservation', DeleteReservation),
 ], debug=True)

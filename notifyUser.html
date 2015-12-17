@@ -11,6 +11,10 @@
     	<h1>Resource has been modified!</h1>
     {% elif value == "reservationAdded" %}
     	<h1>Reservation has been added!</h1>
+    {% elif value == "reservationNotUser" %}
+    	<h1>Reservation cannot be deleted by this user!</h1>
+    {% elif value == "reservationDeleted" %}
+    	<h1>Reservation has been deleted!</h1>
     {% endif %}
     <hr>
     <form action="/" method="get">

@@ -16,23 +16,26 @@
   </style>
 </head>
   <body>
-    <h2>Reservations by: {{user}}</h2>
+    <h2>Reservations by: <a href="/?showUsers=true">{{user}}</a></h2>
     <table width="100%">
       <tr>
         <th>Resource Name</th>
         <th>Booking Date</th>
         <th>Booking Time</th>
+        <th width = "5%">Delete Reservation</th>
       </tr>  
     {% for e in reservations: %}
       <tr>
-          <td><a href="/resource?resourceUniqueID={{ e.resourceUniqueID }}"> {{ e.name }} </a><a href="/generateRSS?resourceUniqueID={{ e.resourceUniqueID }}"> <img src="images/rssImage.jpg" alt="Rss Feed" height="20" width="20"</a></td>
+          <td><a href="/resource?resourceUniqueID={{ e.resourceUniqueID }}"> {{ e.name }} </a><a href="/generateRSS?resourceUniqueID={{ e.resourceUniqueID }}"> <img src="images/rssImage.jpg" alt="Rss Feed" height="20" width="20"></a></td>
           <td><b>{{e.dateDay}}</b>/<b>{{e.dateMonth}}</b>/<b>{{e.dateYear}}</b></td>
-          <td><h5> {{ e.startHour }}:{{ e.startMinute }}{% if e.startMinute == 0 %}0{% endif %} - {{ e.endHour }}:{{ e.endMinute }}{% if e.endMinute == 0 %}0{% endif %} </h5></td>  
+          <td><h5> {{ e.startHour }}:{{ e.startMinute }}{% if e.startMinute == 0 %}0{% endif %} - {{ e.endHour }}:{{ e.endMinute }}{% if e.endMinute == 0 %}0{% endif %} ( duration {{ e.duration}} minutes)</h5></td>  
+          <td style="text-align:center;"><a href="/deleteReservation?reservationUniqueID={{ e.uniqueID }}"> <img src="images/trashIcon.jpg" alt="Delete" height="20" width="20"></a></td>
           
       </tr>        
     {% endfor %}  
     </table>
 
+    {% if showUsers != "true" %}
     <hr>
       <h2>All Resources Available:</h2>
       <table width="100%">
@@ -43,7 +46,7 @@
       </tr>  
       {% for e in allResources: %}
       <tr>
-          <td><a href="/resource?resourceUniqueID={{ e.uniqueID }}"> {{ e.name }} </a> <a href="/generateRSS?resourceUniqueID={{ e.uniqueID }}"> <img src="images/rssImage.jpg" alt="Rss Feed" height="20" width="20"</a></td>
+          <td><a href="/resource?resourceUniqueID={{ e.uniqueID }}"> {{ e.name }} </a> <a href="/generateRSS?resourceUniqueID={{ e.uniqueID }}"> <img src="images/rssImage.jpg" alt="Rss Feed" height="20" width="20"></a></td>
           <td><h5> {{ e.startHour }}:{{ e.startMinute }}{% if e.startMinute == 0 %}0{% endif %} - {{ e.endHour }}:{{ e.endMinute }}{% if e.endMinute == 0 %}0{% endif %} </h5></td>  
           <td>
             {% for x in e.tags: %}
@@ -56,8 +59,9 @@
       {% endfor %} 
     </table>
     <hr>
+    {% endif %}
 
-    <h2>Resources owned by: {{user}}</h2>
+    <h2>Resources owned by: <a href="/?showUsers=true">{{user}}</a></h2>
     <table width="100%">
       <tr>
         <th>Resource Name</th>
@@ -79,11 +83,14 @@
     {% endfor %}  
     </table> 
 
+    {% if showUsers != "true" %}
     <hr>
     
     <form action="/addResource" method="get">
       <div><input type="submit" value="Add a Resource"></div>
     </form>
+
+    {% endif %}
     
     <hr>
 
