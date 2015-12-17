@@ -11,6 +11,7 @@ import datetime
 import time
 import logging
 import uuid
+from google.appengine.api import mail
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -373,6 +374,7 @@ class AddReservation(webapp2.RequestHandler):
             endMinuteGet = int(requestReservationEndTime.minute)
             reservation = Reservation(uniqueID=uniqueID, user=userGet, resourceUniqueID=resourceUniqueID, startHour=startHourGet, startMinute=startMinuteGet, endHour=endHourGet, endMinute=endMinuteGet, dateDay=dateDayGet, dateMonth=dateMonthGet, dateYear=dateYearGet, duration=durationGet)
             reservation.put()
+            sendEmail(reservation, False)
             self.redirect('/notifyUser?value=reservationAdded')
 
 class NotifyUser(webapp2.RequestHandler):
@@ -466,12 +468,34 @@ class ViewByTag(webapp2.RequestHandler):
         }
         self.response.write(template.render(template_values))
 
-class JunkStuff(ndb.Model):
-    value = ndb.StringProperty(indexed=True)
+def sendEmail(reservation, timeToStart):
+    resource = list(Resource.gql("WHERE uniqueID = :1", reservation.resourceUniqueID))[0]
+
+    if timeToStart:
+        mail.send_mail(sender="al4251@nyu.edu",
+                        to=str(reservation.user),
+                        subject="Your reservation for "+resource.name+" is coming up!!",
+                        body = "Hi Your reservation for " + resource.name + " is in 5 minutes. Thank you for using the OST Reservation System. ")
+    else:
+         mail.send_mail(sender="al4251@nyu.edu",
+                        to=str(reservation.user),
+                        subject="Your reservation for "+resource.name+" is confirmed!!",
+                        body = "Hi Your reservation for " + resource.name + " is confirmed. Thank you for using the OST Reservation System. ")
 
 class CronTasker(webapp2.RequestHandler):
     def get(self):
-        val = 1
+        reservations = list(Reservation.gql(""))
+        todaysDate = datetime.datetime.now()
+        delta = datetime.timedelta(hours = 5)
+        todaysDate = todaysDate - delta
+        delta = datetime.timedelta(seconds = 300)
+        todaysDate = todaysDate + delta
+
+        for e in reservations:
+            reservationDateTime = datetime.datetime(e.dateYear, e.dateMonth, e.dateDay, e.startHour, e.startMinute)
+        
+            if todaysDate.year == reservationDateTime.year and todaysDate.month == reservationDateTime.month and todaysDate.day == reservationDateTime.day and todaysDate.hour == reservationDateTime.hour and todaysDate.minute == reservationDateTime.minute:
+                sendEmail(e, True)
 
 class GenerateRSS(webapp2.RequestHandler):
     def get(self):
