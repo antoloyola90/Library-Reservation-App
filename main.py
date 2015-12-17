@@ -29,6 +29,7 @@ class Reservation(ndb.Model):
     dateMonth = ndb.IntegerProperty()
     dateYear = ndb.IntegerProperty()
     name = ndb.StringProperty(indexed=False)
+    duration = ndb.IntegerProperty(indexed=False)
 
 class Resource(ndb.Model):
     uniqueID = ndb.StringProperty(indexed=True)
@@ -258,51 +259,32 @@ class AddReservation(webapp2.RequestHandler):
         year = int(time.strftime("%Y"))
         startHourGet = int(self.request.get('startHour'))
         startMinuteGet = int(self.request.get('startMinute'))
-        endHourGet = int(self.request.get('endHour'))
-        endMinuteGet = int(self.request.get('endMinute'))
         dateYearGet = int(self.request.get('dateYear'))
         dateMonthGet = int(self.request.get('dateMonth'))
         dateDayGet = int(self.request.get('dateDay'))
+        durationGet = int(self.request.get('duration'))
         userGet = users.get_current_user()
         resourceUniqueID = self.request.get('resourceUniqueID')
 
         resource = list(Resource.gql("WHERE uniqueID = :1", resourceUniqueID))[0]
 
-        if startHourGet > endHourGet or ( startHourGet == endHourGet and startMinuteGet >= endMinuteGet):
-            template_values = {
-              'error': 'End Time must be after the Start Time',
-              'startHour': startHourGet,
-              'startMinute': startMinuteGet,
-              'endHour': endHourGet,
-              'endMinute': endMinuteGet,
-              'dateYear': dateYearGet,
-              'dateMonth': dateMonthGet,
-              'dateDay': dateDayGet,
-              'resourceUniqueID': resourceUniqueID,
-              'resource': resource,
-              'todaysYear':year,
-            }
-            template = JINJA_ENVIRONMENT.get_template('addReservation.html')
-            self.response.write(template.render(template_values))
-            return
-
         try:
             requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, startHourGet, startMinuteGet)
-            requestReservationEndTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, endHourGet, endMinuteGet)
+            delta = datetime.timedelta(seconds = durationGet * 60)
+            requestReservationEndTime = requestReservationStartTime + delta
 
         except ValueError:
             template_values = {
-              'error': 'Date is incorrect! :)',
+              'error': 'Date/duration is incorrect! :)',
               'startHour': startHourGet,
               'startMinute': startMinuteGet,
-              'endHour': endHourGet,
-              'endMinute': endMinuteGet,
               'dateYear': dateYearGet,
               'dateMonth': dateMonthGet,
               'dateDay': dateDayGet,
               'resourceUniqueID': resourceUniqueID,
               'resource': resource,
               'todaysYear':year,
+              'duration': durationGet,
             }
             template = JINJA_ENVIRONMENT.get_template('addReservation.html')
             self.response.write(template.render(template_values))
@@ -311,7 +293,8 @@ class AddReservation(webapp2.RequestHandler):
         resource = list(Resource.gql("WHERE uniqueID = :1", resourceUniqueID))[0]
 
         requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, startHourGet, startMinuteGet)
-        requestReservationEndTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, endHourGet, endMinuteGet)
+        delta = datetime.timedelta(seconds = durationGet * 60)
+        requestReservationEndTime = requestReservationStartTime + delta
         resourceStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, resource.startHour, resource.startMinute)
         resourceEndTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, resource.endHour, resource.endMinute)
 
@@ -320,21 +303,19 @@ class AddReservation(webapp2.RequestHandler):
               'error': 'Resource is not available during those times!',
               'startHour': startHourGet,
               'startMinute': startMinuteGet,
-              'endHour': endHourGet,
-              'endMinute': endMinuteGet,
               'dateYear': dateYearGet,
               'dateMonth': dateMonthGet,
               'dateDay': dateDayGet,
               'resourceUniqueID': resourceUniqueID,
               'resource': resource,
               'todaysYear':year,
+              'duration': durationGet,
             }
             template = JINJA_ENVIRONMENT.get_template('addReservation.html')
             self.response.write(template.render(template_values))
             return
 
         requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, startHourGet, startMinuteGet)
-
         todaysDate = datetime.datetime.now()
         delta = datetime.timedelta(hours = 5)
         todaysDate = todaysDate - delta
@@ -344,14 +325,13 @@ class AddReservation(webapp2.RequestHandler):
               'error': 'Choose a time after the NOW! :)',
               'startHour': startHourGet,
               'startMinute': startMinuteGet,
-              'endHour': endHourGet,
-              'endMinute': endMinuteGet,
               'dateYear': dateYearGet,
               'dateMonth': dateMonthGet,
               'dateDay': dateDayGet,
               'resourceUniqueID': resourceUniqueID,
               'resource': resource,
               'todaysYear':year,
+              'duration': durationGet,
             }
             template = JINJA_ENVIRONMENT.get_template('addReservation.html')
             self.response.write(template.render(template_values))
@@ -363,8 +343,9 @@ class AddReservation(webapp2.RequestHandler):
             reservationStart = datetime.datetime(e.dateYear, e.dateMonth, e.dateDay, e.startHour, e.startMinute)
             reservationEnd = datetime.datetime(e.dateYear, e.dateMonth, e.dateDay, e.endHour, e.endMinute) - datetime.timedelta(seconds = 60)
             requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, startHourGet, startMinuteGet)
-            requestReservationEndTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, endHourGet, endMinuteGet) - datetime.timedelta(seconds = 60)
-            
+            delta = datetime.timedelta(seconds = durationGet * 60)
+            requestReservationEndTime = requestReservationStartTime + delta - datetime.timedelta(seconds = 60)
+
             overlap = reservationStart <= requestReservationEndTime and reservationEnd >= requestReservationStartTime
             
             if overlap:
@@ -378,20 +359,24 @@ class AddReservation(webapp2.RequestHandler):
                 'error': 'This Reservation is not available for that time range.',
                 'startHour': startHourGet,
                 'startMinute': startMinuteGet,
-                'endHour': endHourGet,
-                'endMinute': endMinuteGet,
                 'dateYear': dateYearGet,
                 'dateMonth': dateMonthGet,
                 'dateDay': dateDayGet,
                 'resourceUniqueID': resourceUniqueID,
                 'resource': resource,
                 'todaysYear':year,
+                'duration': durationGet,
             }
 
             self.response.write(template.render(template_values))
         else:
             uniqueID = str(uuid.uuid4())
-            reservation = Reservation(uniqueID=uniqueID, user=userGet, resourceUniqueID=resourceUniqueID, startHour=startHourGet, startMinute=startMinuteGet, endHour=endHourGet, endMinute=endMinuteGet, dateDay=dateDayGet, dateMonth=dateMonthGet, dateYear=dateYearGet)
+            requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, startHourGet, startMinuteGet)
+            delta = datetime.timedelta(seconds = durationGet * 60)
+            requestReservationEndTime = requestReservationStartTime + delta
+            endHourGet = int(requestReservationEndTime.hour)
+            endMinuteGet = int(requestReservationEndTime.minute)
+            reservation = Reservation(uniqueID=uniqueID, user=userGet, resourceUniqueID=resourceUniqueID, startHour=startHourGet, startMinute=startMinuteGet, endHour=endHourGet, endMinute=endMinuteGet, dateDay=dateDayGet, dateMonth=dateMonthGet, dateYear=dateYearGet, duration=durationGet)
             reservation.put()
             self.redirect('/notifyUser?value=reservationAdded')
 

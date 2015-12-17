@@ -100,32 +100,17 @@
         </select>
       </td>
     </tr>
-    <tr>
-      <td>End Time </td>
-        <td>
-        <select name="endHour">
-          {% for x in range(0,24) %}
-            {% if endHour and endHour == x %}
-              <option value="{{ x }}" selected>{{ x }}</option>
-            {% else %}  
-              <option value="{{ x }}">{{ x }}</option>
-            {% endif %}  
-          {% endfor %}
-          </select>
-        </td>
-        <td>
-          <select name="endMinute">
-          {% for x in range(0,60,5): %}
-            {% if endMinute and endMinute == x %}
-              <option value="{{ x }}" selected>{{ x }}</option>
-            {% else %}  
-              <option value="{{ x }}">{{ x }}</option>
-            {% endif %}  
-          {% endfor %}
-        </select>
-      </td>
-    </tr>
     </table>
+    <p>
+    <label id="resourceName">Reservation Duration (in minutes): </label>
+      {% if duration %}
+        <input type="text" name="duration"  value="{{ duration }}" />
+      {% else %}
+        <input type="text" name="duration"/>
+      {% endif %}  
+    </p>
+    
+    
     <hr>
       <input type="submit">
     </form>
