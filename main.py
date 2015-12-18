@@ -48,6 +48,7 @@ class MainPage(webapp2.RequestHandler):
         user = users.get_current_user()
         url = users.create_logout_url(self.request.uri)
         url_linktext = 'Logout'
+        year = int(time.strftime("%Y"))
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
 
@@ -121,6 +122,7 @@ class MainPage(webapp2.RequestHandler):
             'reservations': reservations,
             'allResources': resourcesDone,
             'showUsers': str(showUsers),
+            'todaysYear':year,
         }
         
         template = JINJA_ENVIRONMENT.get_template('index.html')
@@ -584,6 +586,54 @@ class SearchByName(webapp2.RequestHandler):
         template = JINJA_ENVIRONMENT.get_template('searchByName.html')
         self.response.write(template.render(template_values)) 
 
+class SearchByAvailability(webapp2.RequestHandler):
+    def post(self):
+        searchValue = self.request.get('searchValue').lower()
+        reservationOnDate = list(Resource.gql(""))
+        startHourGet = int(self.request.get('startHour'))
+        startMinuteGet = int(self.request.get('startMinute'))
+        dateYearGet = int(self.request.get('dateYear'))
+        dateMonthGet = int(self.request.get('dateMonth'))
+        dateDayGet = int(self.request.get('dateDay'))
+        durationGet = int(self.request.get('duration'))
+
+        reservationsForDay = list(Reservation.gql("WHERE dateYear = :1 AND dateMonth = :2 AND dateDay = :3", dateYearGet, dateMonthGet, dateDayGet))
+
+        requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, startHourGet, startMinuteGet)
+        delta = datetime.timedelta(seconds = durationGet * 60)
+        requestReservationEndTime = requestReservationStartTime + delta
+
+        resourceList = list()
+        resourcesHandled = list()
+        for x in reservationsForDay:
+            reservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, x.startHour, x.startMinute)
+            reservationEndTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, x.endHour, x.endMinute)
+            overlap = reservationStartTime <= requestReservationEndTime and reservationEndTime >= requestReservationStartTime
+            resource = list(Resource.gql("WHERE uniqueID = :1", x.resourceUniqueID))[0]
+            resourcesHandled.append(resource)
+
+            if not(overlap):
+                if resource not in resourceList:
+                    resourceList.append(resource)
+
+        allResource = list(Resource.gql(""))
+
+        for x in allResource:
+            if x not in resourcesHandled:
+                resourceList.append(x)
+
+        template_values = {
+            'resources': resourceList,
+            'startHour': startHourGet,
+            'startMinute': startMinuteGet,
+            'dateYear': dateYearGet,
+            'dateMonth': dateMonthGet,
+            'dateDay': dateDayGet,
+            'duration': durationGet,
+        }
+        template = JINJA_ENVIRONMENT.get_template('searchByAvailability.html')
+        self.response.write(template.render(template_values)) 
+
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/addResource', AddResource),
@@ -596,4 +646,5 @@ app = webapp2.WSGIApplication([
     ('/generateRSS', GenerateRSS),
     ('/deleteReservation', DeleteReservation),
     ('/searchByName', SearchByName),
+    ('/searchByAvailability', SearchByAvailability),
 ], debug=True)
