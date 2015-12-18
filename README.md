@@ -1,31 +1,32 @@
-# Project Name
+# A Developers Guide to the Reservation Galaxy
 
-TODO: Write a project description
+# Author
 
-## Installation
+Anto Loyola
 
-TODO: Describe the installation process
+## Implementation Assumptions
 
-## Usage
+- Resources can have the same name
 
-TODO: Write usage instructions
+- Resources can only have reservations on the same day
 
-## Contributing
+- In RSS, even the previous reservations that have passed are printed to help with book-keeping
 
-1. Fork it!
-2. Create your feature branch: `git checkout -b my-new-feature`
-3. Commit your changes: `git commit -am 'Add some feature'`
-4. Push to the branch: `git push origin my-new-feature`
-5. Submit a pull request :D
+- If an owner edits a resource then the reservations already on the system will not change and changes are made only for future reservations
 
-## History
+- The Resource once created, cannot be deleted but can be changed to another resource. This functionality would be very easy to implement but I did not feel that I would learn anything new by implementing this. Concentrated on the extra credits instead 
 
-TODO: Write history
 
-## Credits
+## Extra Credit
 
-TODO: Write credits
+- An Email will be sent out when the Reservation is made
 
-## License
+- An Email will be sent out when the Reservation start time is 5 minutes away. This was implemented using a Cron Job.
 
-TODO: Write license
+- Resources can be searched by Name. Partial hits will also be shown. If no search value is given by the user then all resources are displayed
+
+- Resources can be searched by Availability. Takes the Date, Start Time and the duration that the user is searching for. If duration is entered incorrectly by the user then duration = 1 hour.
+
+- The number of times a resource has been reserved in the past is also shown wherever the resource is displayed
+
+- Reservations cannot be made if there is already a reservation by the user for any resource during that time
