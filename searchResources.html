@@ -11,7 +11,11 @@
       <li><a href="/addResource">Add Resource</a></li>
     </ul>
     <div>
-    <h1>Viewing Resources by Search Value = "{{ searchValue }}"</h1>
+    {% if searchByAvailability == "true" %}
+      <h1>Viewing Resources by Availability = "{{ startHour }}:{{ startMinute }}{% if startMinute == 0 %}0{% endif %}:00  (duration = {{duration}} minutes) on {{dateDay}}/{{dateMonth}}/{{dateYear}}"</h1>
+    {% else %}
+      <h1>Viewing Resources by Search Value = "{{ searchValue }}"</h1>
+    {% endif %}
     <table width="100%">
       <tr>
         <th>Resource Name</th>

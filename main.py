@@ -583,7 +583,7 @@ class SearchByName(webapp2.RequestHandler):
           'resources': resources,
           'searchValue': searchValue,
         }
-        template = JINJA_ENVIRONMENT.get_template('searchByName.html')
+        template = JINJA_ENVIRONMENT.get_template('searchResources.html')
         self.response.write(template.render(template_values)) 
 
 class SearchByAvailability(webapp2.RequestHandler):
@@ -630,8 +630,9 @@ class SearchByAvailability(webapp2.RequestHandler):
             'dateMonth': dateMonthGet,
             'dateDay': dateDayGet,
             'duration': durationGet,
+            'searchByAvailability': 'true'
         }
-        template = JINJA_ENVIRONMENT.get_template('searchByAvailability.html')
+        template = JINJA_ENVIRONMENT.get_template('searchResources.html')
         self.response.write(template.render(template_values)) 
 
 app = webapp2.WSGIApplication([
