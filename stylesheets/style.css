@@ -27,14 +27,14 @@ th, td {
 }
 
 body {
-	background-color:#b3d8ff
-	margin:0
+	background-color:#f2f2f2;
+	margin:0;
 }
 
 textarea {
 	font-size: 14pt;
 	font-family: Arial;
-	background-color:#b3d8ff
+	background-color:#f2f2f2
 } 
 
 ul {
@@ -50,10 +50,6 @@ ul {
 
 li {
     float: left;
-}
-
-body {
-	background-color: #f2f2f2;
 }
 
 li a {
