@@ -277,6 +277,9 @@ class AddReservation(webapp2.RequestHandler):
         self.response.write(template.render(template_values))
 
     def post(self):
+        user = users.get_current_user()
+        if user is None:
+            self.redirect(users.create_login_url(self.request.uri))
         url = users.create_logout_url(self.request.uri)
         url_linktext = 'Logout'
         year = int(time.strftime("%Y"))
@@ -365,6 +368,35 @@ class AddReservation(webapp2.RequestHandler):
             template = JINJA_ENVIRONMENT.get_template('addReservation.html')
             self.response.write(template.render(template_values))
             return
+
+        reservationsForUserOnThisDay = list(Reservation.gql("WHERE user = :1 AND dateYear = :2 AND dateMonth = :3 AND dateDay = :4", user, dateYearGet, dateMonthGet, dateDayGet))
+
+        requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, startHourGet, startMinuteGet)
+        delta = datetime.timedelta(seconds = durationGet * 60)
+        requestReservationEndTime = requestReservationStartTime + delta
+
+        for e in reservationsForUserOnThisDay:
+            reservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, e.startHour, e.startMinute)
+            reservationEndTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, e.endHour, e.endMinute)
+
+            if reservationStartTime <= requestReservationEndTime and reservationEndTime >= requestReservationStartTime:
+                template_values = {
+                  'error': 'You already have a reservation during that duration!',
+                  'startHour': startHourGet,
+                  'startMinute': startMinuteGet,
+                  'dateYear': dateYearGet,
+                  'dateMonth': dateMonthGet,
+                  'dateDay': dateDayGet,
+                  'resourceUniqueID': resourceUniqueID,
+                  'resource': resource,
+                  'todaysYear':year,
+                  'duration': durationGet,
+                  'url': url,
+                  'url_linktext': url_linktext,
+                }
+                template = JINJA_ENVIRONMENT.get_template('addReservation.html')
+                self.response.write(template.render(template_values))
+                return
 
         overlapReservation = False
         reservations_for_resource = Reservation.gql("WHERE resourceUniqueID = :1 AND dateYear = :2 AND dateMonth = :3 AND dateDay = :4", resourceUniqueID, dateYearGet, dateMonthGet, dateDayGet)
@@ -579,6 +611,13 @@ class SearchByName(webapp2.RequestHandler):
         searchValue = self.request.get('searchValue').lower()
         resources = list(Resource.gql(""))
         resources = [ x for x in resources if searchValue.lower() in x.name.lower() ]
+
+        for x in resources:
+            results = list(Reservation.gql("WHERE resourceUniqueID = :1", x.uniqueID))
+            x.pastReservationCount = len(results)
+
+        resources.sort(key=lambda x: x.name)
+
         template_values = {
           'resources': resources,
           'searchValue': searchValue,
@@ -588,14 +627,18 @@ class SearchByName(webapp2.RequestHandler):
 
 class SearchByAvailability(webapp2.RequestHandler):
     def post(self):
-        searchValue = self.request.get('searchValue').lower()
         reservationOnDate = list(Resource.gql(""))
         startHourGet = int(self.request.get('startHour'))
         startMinuteGet = int(self.request.get('startMinute'))
         dateYearGet = int(self.request.get('dateYear'))
         dateMonthGet = int(self.request.get('dateMonth'))
         dateDayGet = int(self.request.get('dateDay'))
-        durationGet = int(self.request.get('duration'))
+        duration = self.request.get('duration')
+
+        try:
+            durationGet = int(duration)
+        except ValueError:
+            durationGet = 60
 
         reservationsForDay = list(Reservation.gql("WHERE dateYear = :1 AND dateMonth = :2 AND dateDay = :3", dateYearGet, dateMonthGet, dateDayGet))
 
@@ -621,6 +664,12 @@ class SearchByAvailability(webapp2.RequestHandler):
         for x in allResource:
             if x not in resourcesHandled:
                 resourceList.append(x)
+
+        for x in resourceList:
+            results = list(Reservation.gql("WHERE resourceUniqueID = :1", x.uniqueID))
+            x.pastReservationCount = len(results)
+
+        resourceList.sort(key=lambda x: x.name)
 
         template_values = {
             'resources': resourceList,
