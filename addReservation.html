@@ -3,6 +3,7 @@
 
 <html>
 <head>
+  <title>OST Reservation System</title>
   <style>
     
     th.title {
@@ -13,8 +14,15 @@
         text-align: left;
     }
   </style>
+
+  <link rel="stylesheet" type="text/css" href="stylesheets/style.css">
 </head>
   <body>
+    <ul>
+      <li><a href="/">Main Page</a></li>
+      <li><a href="/addResource">Add Resource</a></li>
+    </ul>
+    <div>
     {% if error %}
        <b> {{ error }} </b>
     {% endif %}
@@ -114,6 +122,9 @@
     <hr>
       <input type="submit">
     </form>
+
+    <a href="{{ url|safe }}">{{ url_linktext }}</a>
+    </div>
   </body>
 </html>
 {% endautoescape %}

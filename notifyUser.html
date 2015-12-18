@@ -2,9 +2,15 @@
 {% autoescape true %}
 <html>
 <head>
-
+	<title>OST Reservation System</title>
+  	<link rel="stylesheet" type="text/css" href="stylesheets/style.css">
 </head>
   <body>
+  	<ul>
+      <li><a href="/">Main Page</a></li>
+      <li><a href="/addResource">Add Resource</a></li>
+    </ul>
+    <div>
   	{% if value == "resourceAdded" %}
     	<h1>Resource has been Added!</h1>
     {% elif value == "resourceModified" %}
@@ -17,10 +23,9 @@
     	<h1>Reservation has been deleted!</h1>
     {% endif %}
     <hr>
-    <form action="/" method="get">
-      <div><input type="submit" value="Return to Main Page"></div>
-    </form>
-    <hr>
+
+    <a href="{{ url|safe }}">{{ url_linktext }}</a>
+	</div>
   </body>
 </html>
 {% endautoescape %}

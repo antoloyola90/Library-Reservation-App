@@ -122,6 +122,8 @@ class AddResource(webapp2.RequestHandler):
         user = users.get_current_user()
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
+        url = users.create_logout_url(self.request.uri)
+        url_linktext = 'Logout'
 
         resourceNameGet = self.request.get('resourceName')
         if resourceNameGet:
@@ -148,6 +150,8 @@ class AddResource(webapp2.RequestHandler):
                 'tags': tagsList,
                 'editResource': editResource,
                 'uniqueID': uniqueID,
+                'url': url,
+                'url_linktext': url_linktext,
             }
 
         else:
@@ -159,6 +163,8 @@ class AddResource(webapp2.RequestHandler):
         self.response.write(template.render(template_values))
 
     def post(self):
+        url = users.create_logout_url(self.request.uri)
+        url_linktext = 'Logout'
         resourceNameGet = self.request.get('resourceName')
         startHourGet = int(self.request.get('startHour'))
         startMinuteGet = int(self.request.get('startMinute'))
@@ -180,6 +186,8 @@ class AddResource(webapp2.RequestHandler):
               'tags': tagsGet,
               'editResource': editResource,
               'uniqueID': uniqueID,
+              'url': url,
+              'url_linktext': url_linktext,
             }
             template = JINJA_ENVIRONMENT.get_template('addResource.html')
             self.response.write(template.render(template_values))
@@ -196,6 +204,8 @@ class AddResource(webapp2.RequestHandler):
               'tags': tagsGet,
               'editResource': editResource,
               'uniqueID': uniqueID,
+              'url': url,
+              'url_linktext': url_linktext,
             }
             template = JINJA_ENVIRONMENT.get_template('addResource.html')
             self.response.write(template.render(template_values))
@@ -218,10 +228,10 @@ class AddResource(webapp2.RequestHandler):
                 tokens = [ s.strip() for s in tokens ]
                 resource.tags = tokens
                 resource.put()
-                self.redirect('/notifyUser?value=resourceModified')
+                self.redirect('/notifyUser?value=resourceModified&url='+url+'&url_linktext='+url_linktext)
             else:
                 resource.put()
-                self.redirect('/notifyUser?value=resourceModified')
+                self.redirect('/notifyUser?value=resourceModified&url='+url+'&url_linktext='+url_linktext)
         else:    
             uniqueID = str(uuid.uuid4())
             if not(tagsGet is None or tagsGet == ""):
@@ -229,15 +239,17 @@ class AddResource(webapp2.RequestHandler):
                 tokens = [ s.strip() for s in tokens ]
                 resource = Resource(uniqueID=uniqueID, user=userGet, name=resourceNameGet, startHour=startHourGet, startMinute=startMinuteGet, endHour=endHourGet, endMinute=endMinuteGet, tags=tokens)
                 resource.put()
-                self.redirect('/notifyUser?value=resourceAdded')
+                self.redirect('/notifyUser?value=resourceAdded&url='+url+'&url_linktext='+url_linktext)
             else:
                 resource = Resource(uniqueID=uniqueID, user=userGet, name=resourceNameGet, startHour=startHourGet, startMinute=startMinuteGet, endHour=endHourGet, endMinute=endMinuteGet)
                 resource.put()
-                self.redirect('/notifyUser?value=resourceAdded')
+                self.redirect('/notifyUser?value=resourceAdded&url='+url+'&url_linktext='+url_linktext)
 
 class AddReservation(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
+        url = users.create_logout_url(self.request.uri)
+        url_linktext = 'Logout'
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
         template = JINJA_ENVIRONMENT.get_template('addReservation.html')
@@ -248,10 +260,14 @@ class AddReservation(webapp2.RequestHandler):
             'resourceUniqueID': resourceUniqueID,
             'resource': resource,
             'todaysYear':year,
+            'url': url,
+            'url_linktext': url_linktext,
         }
         self.response.write(template.render(template_values))
 
     def post(self):
+        url = users.create_logout_url(self.request.uri)
+        url_linktext = 'Logout'
         year = int(time.strftime("%Y"))
         startHourGet = int(self.request.get('startHour'))
         startMinuteGet = int(self.request.get('startMinute'))
@@ -281,6 +297,8 @@ class AddReservation(webapp2.RequestHandler):
               'resource': resource,
               'todaysYear':year,
               'duration': durationGet,
+              'url': url,
+              'url_linktext': url_linktext,
             }
             template = JINJA_ENVIRONMENT.get_template('addReservation.html')
             self.response.write(template.render(template_values))
@@ -306,6 +324,8 @@ class AddReservation(webapp2.RequestHandler):
               'resource': resource,
               'todaysYear':year,
               'duration': durationGet,
+              'url': url,
+              'url_linktext': url_linktext,
             }
             template = JINJA_ENVIRONMENT.get_template('addReservation.html')
             self.response.write(template.render(template_values))
@@ -328,6 +348,8 @@ class AddReservation(webapp2.RequestHandler):
               'resource': resource,
               'todaysYear':year,
               'duration': durationGet,
+              'url': url,
+              'url_linktext': url_linktext,
             }
             template = JINJA_ENVIRONMENT.get_template('addReservation.html')
             self.response.write(template.render(template_values))
@@ -362,6 +384,8 @@ class AddReservation(webapp2.RequestHandler):
                 'resource': resource,
                 'todaysYear':year,
                 'duration': durationGet,
+                'url': url,
+                'url_linktext': url_linktext,
             }
 
             self.response.write(template.render(template_values))
@@ -375,13 +399,17 @@ class AddReservation(webapp2.RequestHandler):
             reservation = Reservation(uniqueID=uniqueID, user=userGet, resourceUniqueID=resourceUniqueID, startHour=startHourGet, startMinute=startMinuteGet, endHour=endHourGet, endMinute=endMinuteGet, dateDay=dateDayGet, dateMonth=dateMonthGet, dateYear=dateYearGet, duration=durationGet)
             reservation.put()
             sendEmail(reservation, False)
-            self.redirect('/notifyUser?value=reservationAdded')
+            self.redirect('/notifyUser?value=reservationAdded&url='+url+'&url_linktext='+url_linktext)
 
 class NotifyUser(webapp2.RequestHandler):
     def get(self):
         value = self.request.get('value')
+        url = users.create_logout_url(self.request.uri)
+        url_linktext = 'Logout'
         template_values = {
             'value': value,
+            'url': url,
+            'url_linktext': url_linktext,
         }
         template = JINJA_ENVIRONMENT.get_template('notifyUser.html')
         self.response.write(template.render(template_values))
@@ -390,6 +418,8 @@ class NotifyUser(webapp2.RequestHandler):
 class ViewResource(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
+        url = users.create_logout_url(self.request.uri)
+        url_linktext = 'Logout'
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
 
@@ -425,6 +455,8 @@ class ViewResource(webapp2.RequestHandler):
             'reservations': reservations_for_resource,
             'tagsWork': tagsWork,
             'editActive': str(editActive),
+            'url': url,
+            'url_linktext': url_linktext,
         }
         self.response.write(template.render(template_values))
 
@@ -432,21 +464,25 @@ class DeleteReservation(webapp2.RequestHandler):
     def get(self):
         reservationUniqueID = self.request.get('reservationUniqueID')
         user = users.get_current_user()
+        url = users.create_logout_url(self.request.uri)
+        url_linktext = 'Logout'
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
 
         reservation = Reservation.query(Reservation.uniqueID == reservationUniqueID).get()
 
         if user != reservation.user:
-            self.redirect('/notifyUser?value=reservationNotUser')
+            self.redirect('/notifyUser?value=reservationNotUser&url='+url+'&url_linktext='+url_linktext)
             return
 
         reservation.key.delete()
-        self.redirect('/notifyUser?value=reservationDeleted')
+        self.redirect('/notifyUser?value=reservationDeleted&url='+url+'&url_linktext='+url_linktext)
 
 class ViewByTag(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
+        url = users.create_logout_url(self.request.uri)
+        url_linktext = 'Logout'
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
 
@@ -465,6 +501,8 @@ class ViewByTag(webapp2.RequestHandler):
         template_values = {
             'resources': resourcesByTag,
             'tag': tag,
+            'url': url,
+            'url_linktext': url_linktext,
         }
         self.response.write(template.render(template_values))
 
@@ -499,6 +537,8 @@ class CronTasker(webapp2.RequestHandler):
 
 class GenerateRSS(webapp2.RequestHandler):
     def get(self):
+        url = users.create_logout_url(self.request.uri)
+        url_linktext = 'Logout'
         resourceUniqueID = self.request.get('resourceUniqueID')
         resource = list(Resource.gql("WHERE uniqueID = :1", resourceUniqueID))[0]
         reservations_for_resource = list(Reservation.gql("WHERE resourceUniqueID = :1", resourceUniqueID))
@@ -507,6 +547,8 @@ class GenerateRSS(webapp2.RequestHandler):
         template_values = {
             'resource': resource,
             'reservations_for_resource': reservations_for_resource,
+            'url': url,
+            'url_linktext': url_linktext,
         }  
         self.response.write(template.render(template_values))
 

@@ -2,20 +2,15 @@
 {% autoescape true %}
 <html>
 <head>
-
-  <style>
-    table, th, td {
-        border: 1px solid black;
-    }
-    th, td {
-        padding: 5px;
-    }
-    th {
-        text-align: center;
-    }
-  </style>
+  <title>OST Reservation System</title>
+  <link rel="stylesheet" type="text/css" href="stylesheets/style.css">
 </head>
   <body>
+    <ul>
+      <li><a href="/">Main Page</a></li>
+      <li><a href="/addResource">Add Resource</a></li>
+    </ul>
+    <div>
     <h1>Viewing Resources by Tag = "{{ tag }}"</h1>
     <table width="100%">
       <tr>
@@ -39,7 +34,7 @@
     <hr>
 
     <a href="{{ url|safe }}">{{ url_linktext }}</a>
-
+  </div>
   </body>
 </html>
 {% endautoescape %}

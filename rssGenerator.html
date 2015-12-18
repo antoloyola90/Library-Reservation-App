@@ -2,14 +2,15 @@
 {% autoescape true %}
 <html>
 <head>
-  <style type="text/css">
-  	textarea {
-   		font-size: 14pt;
-   		font-family: Arial;
-	} 
-  </style>
+	<title>OST Reservation System</title>
+  	<link rel="stylesheet" type="text/css" href="stylesheets/style.css">
 </head>
   <body>
+  	<ul>
+      <li><a href="/">Main Page</a></li>
+      <li><a href="/addResource">Add Resource</a></li>
+    </ul>
+    <div>
   	<textarea style="border:none" rows="50" cols="100">
 	    &lt;?xml version="1.0" encoding="UTF-8" ?&gt;
 	    &lt;rss version="2.0"&gt;
@@ -42,6 +43,9 @@
         		&lt;/Resource&gt;
         		&lt;/rss&gt;
 	</textarea>
+	<br>
+	<a href="{{ url|safe }}">{{ url_linktext }}</a>
+	</div>
   </body>
 </html>
 {% endautoescape %}

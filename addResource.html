@@ -3,9 +3,17 @@
 
 <html>
 <head>
-  <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+  
+  <title>OST Reservation System</title>
+  <link type="text/css" rel="stylesheet" href="/stylesheets/style.css" />
+
 </head>
   <body>
+    <ul>
+      <li><a href="/">Main Page</a></li>
+      <li><a class="active" href="/addResource">Add Resource</a></li>
+    </ul>
+    <div>
     {% if error %}
        <b> {{ error }} </b>
     {% endif %}
@@ -76,6 +84,9 @@
       </p>
       <input type="submit">
     </form>
+
+    <a href="{{ url|safe }}">{{ url_linktext }}</a>
+  </div>
   </body>
 </html>
 {% endautoescape %}
