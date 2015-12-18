@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+<head>
+  <title>OST Reservation System</title>
+  <link rel="stylesheet" type="text/css" href="stylesheets/style.css">
+</head>
+  <body>
+    <ul>
+      <li><a href="/">Main Page</a></li>
+      <li><a href="/addResource">Add Resource</a></li>
+    </ul>
+    <div>
+    <h1>Viewing Resources by Search Value = "{{ searchValue }}"</h1>
+    <table width="100%">
+      <tr>
+        <th>Resource Name</th>
+        <th>Availability hours</th>
+        <th>Tags</th>
+      </tr>  
+    {% for resource in resources: %}
+    <tr>
+        <td><a href="/resource?resourceUniqueID={{ resource.uniqueID }}"> {{ resource.name }} </a><a href="/generateRSS?resourceUniqueID={{ resource.uniqueID }}"> <img src="images/rssImage.jpg" alt="Rss Feed" height="20" width="20"</a></t6>
+        <td><h5> {{ resource.startHour }}:{{ resource.startMinute }}{% if resource.startMinute == 0 %}0{% endif %} - {{ resource.endHour }}:{{ resource.endMinute }}{% if resource.endMinute == 0 %}0{% endif %}  </h5></t6>
+        <td>
+          {% for x in resource.tags: %}
+            <a href="/tags?tag={{ x }}"> {{ x }} </a>&nbsp;
+          {% endfor %}
+        </td>
+    </tr>        
+    {% endfor %}
+    </table> 
+    
+    <hr>
+
+    <a href="{{ url|safe }}">{{ url_linktext }}</a>
+  </div>
+  </body>
+</html>
+{% endautoescape %}

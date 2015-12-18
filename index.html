@@ -89,6 +89,17 @@
     
     <hr>
 
+    <label ><h3>Search By Name: <h3></label>
+      <form action="/searchByName" method="post">
+        <p>
+          <input type="text" name="searchValue" placeholder="Search By Name" required />
+        </p>
+        <p>
+          <input type="submit" value="Search">
+      </form>
+
+      <hr>
+
     <a href="{{ url|safe }}">{{ url_linktext }}</a>
   </div>
   </body>

@@ -552,6 +552,18 @@ class GenerateRSS(webapp2.RequestHandler):
         }  
         self.response.write(template.render(template_values))
 
+class SearchByName(webapp2.RequestHandler):
+    def post(self):
+        searchValue = self.request.get('searchValue').lower()
+        resources = list(Resource.gql(""))
+        resources = [ x for x in resources if searchValue.lower() in x.name.lower() ]
+        template_values = {
+          'resources': resources,
+          'searchValue': searchValue,
+        }
+        template = JINJA_ENVIRONMENT.get_template('searchByName.html')
+        self.response.write(template.render(template_values)) 
+
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/addResource', AddResource),
@@ -563,4 +575,5 @@ app = webapp2.WSGIApplication([
     ('/notifyUser', NotifyUser),
     ('/generateRSS', GenerateRSS),
     ('/deleteReservation', DeleteReservation),
+    ('/searchByName', SearchByName),
 ], debug=True)
