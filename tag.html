@@ -17,6 +17,7 @@
         <th>Resource Name</th>
         <th>Availability hours</th>
         <th>Tags</th>
+        <th>Number of Times Reserved</th>
       </tr>  
     {% for resource in resources: %}
     <tr>
@@ -27,6 +28,7 @@
             <a href="/tags?tag={{ x }}"> {{ x }} </a>&nbsp;
           {% endfor %}
         </td>
+        <td>{{resource.pastReservationCount}}</td>
     </tr>        
     {% endfor %}
     </table> 

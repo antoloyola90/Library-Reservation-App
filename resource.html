@@ -17,6 +17,7 @@
         <th>Resource Name</th>
         <th>Availability hours</th>
         <th>Tags</th>
+        <th>Number of Times Reserved</th>
       </tr>  
     <tr>
         <td><a href="/resource?resourceUniqueID={{ resource.uniqueID }}"> {{ resource.name }} </a><a href="/generateRSS?resourceUniqueID={{ resource.uniqueID }}"> <img src="images/rssImage.jpg" alt="Rss Feed" height="20" width="20"></a></t6>
@@ -26,6 +27,7 @@
             <a href="/tags?tag={{ x }}"> {{ x }} </a>&nbsp;
           {% endfor %}
         </td>
+        <td>{{resource.pastReservationCount}}</td>
     </tr>        
     
     </table> 

@@ -19,6 +19,7 @@
 		    &lt;Resource&gt;
 			    &lt;ResourceName&gt;{{resource.name}}&lt;/ResourceName&gt;
 			    &lt;ResourceOwner&gt;{{resource.user}}&lt;/ResourceOwner&gt;
+			    &lt;NumberOfTimesReserved&gt;{{resource.pastReservationCount}}&lt;/NumberOfTimesReserved&gt;
 			    &lt;ResourceTags&gt;
 			    	{% for tag in resource.tags %}
             			&lt;ResourceTag&gt;{{tag}}&lt;/ResourceTag&gt;

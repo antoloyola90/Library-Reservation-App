@@ -41,6 +41,7 @@ class Resource(ndb.Model):
     endHour = ndb.IntegerProperty(indexed=False)
     endMinute = ndb.IntegerProperty(indexed=False)
     tags = ndb.StringProperty(repeated=True)
+    pastReservationCount = ndb.IntegerProperty(indexed=False)
 
 class MainPage(webapp2.RequestHandler):
     def get(self):
@@ -103,6 +104,14 @@ class MainPage(webapp2.RequestHandler):
         for x in allResources:
             if x not in resourcesDone:
                 resourcesDone.append(x)
+
+        for x in resourcesDone:
+            results = list(Reservation.gql("WHERE resourceUniqueID = :1", x.uniqueID))
+            x.pastReservationCount = len(results)
+
+        for x in index_list:
+            results = list(Reservation.gql("WHERE resourceUniqueID = :1", x.uniqueID))
+            x.pastReservationCount = len(results)
 
         template_values = {
             'user': user,
@@ -450,6 +459,10 @@ class ViewResource(webapp2.RequestHandler):
             tagsWork = False
 
         editActive = user == resource.user
+
+        results = list(Reservation.gql("WHERE resourceUniqueID = :1", resource.uniqueID))
+        resource.pastReservationCount = len(results)
+
         template_values = {
             'resource': resource,
             'reservations': reservations_for_resource,
@@ -497,6 +510,10 @@ class ViewByTag(webapp2.RequestHandler):
         for x in resourcesToDelete:
             resourcesByTag = [e for e in resourcesByTag if e.uniqueID != x.uniqueID]
 
+        for x in resourcesByTag:
+            results = list(Reservation.gql("WHERE resourceUniqueID = :1", x.uniqueID))
+            x.pastReservationCount = len(results)
+
         template = JINJA_ENVIRONMENT.get_template('tag.html')
         template_values = {
             'resources': resourcesByTag,
@@ -542,6 +559,9 @@ class GenerateRSS(webapp2.RequestHandler):
         resourceUniqueID = self.request.get('resourceUniqueID')
         resource = list(Resource.gql("WHERE uniqueID = :1", resourceUniqueID))[0]
         reservations_for_resource = list(Reservation.gql("WHERE resourceUniqueID = :1", resourceUniqueID))
+
+        results = list(Reservation.gql("WHERE resourceUniqueID = :1", resource.uniqueID))
+        resource.pastReservationCount = len(results)
 
         template = JINJA_ENVIRONMENT.get_template('rssGenerator.html')
         template_values = {
