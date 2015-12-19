@@ -43,6 +43,16 @@ class Resource(ndb.Model):
     tags = ndb.StringProperty(repeated=True)
     pastReservationCount = ndb.IntegerProperty(indexed=False)
 
+def getNumberOfPastReservations(resource):
+    results = list(Reservation.gql("WHERE resourceUniqueID = :1", resource.uniqueID))
+    resource.pastReservationCount = len(results)
+    return resource
+
+def getNumberOfPastReservationsByList(resourceList):
+    for x in resourceList:
+        x = getNumberOfPastReservations(x)
+    return resourceList
+
 class MainPage(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
@@ -106,13 +116,8 @@ class MainPage(webapp2.RequestHandler):
             if x not in resourcesDone:
                 resourcesDone.append(x)
 
-        for x in resourcesDone:
-            results = list(Reservation.gql("WHERE resourceUniqueID = :1", x.uniqueID))
-            x.pastReservationCount = len(results)
-
-        for x in index_list:
-            results = list(Reservation.gql("WHERE resourceUniqueID = :1", x.uniqueID))
-            x.pastReservationCount = len(results)
+        resourcesDone = getNumberOfPastReservationsByList(resourcesDone)
+        index_list = getNumberOfPastReservationsByList(index_list)
 
         template_values = {
             'user': user,
@@ -122,9 +127,9 @@ class MainPage(webapp2.RequestHandler):
             'reservations': reservations,
             'allResources': resourcesDone,
             'showUsers': str(showUsers),
-            'todaysYear':year,
         }
         
+        template_values['todaysYear'] = year
         template = JINJA_ENVIRONMENT.get_template('index.html')
         self.response.write(template.render(template_values))
 
@@ -186,38 +191,26 @@ class AddResource(webapp2.RequestHandler):
         editResource = self.request.get('editResource')
         uniqueID = self.request.get('uniqueID')
 
+        template_values = {}
+        template_values['resourceName'] = resourceNameGet
+        template_values['startHour'] = startHourGet
+        template_values['startMinute'] = startMinuteGet
+        template_values['endHour'] = endHourGet
+        template_values['endMinute'] = endMinuteGet
+        template_values['tags'] = tagsGet
+        template_values['editResource'] = editResource
+        template_values['uniqueID'] = uniqueID
+        template_values['url'] = url
+        template_values['url_linktext'] = url_linktext
+
         if resourceNameGet is None or len(resourceNameGet) == 0:
-            template_values = {
-              'error': 'Resource Name cannot be empty',
-              'resourceName': resourceNameGet,
-              'startHour': startHourGet,
-              'startMinute': startMinuteGet,
-              'endHour': endHourGet,
-              'endMinute': endMinuteGet,
-              'tags': tagsGet,
-              'editResource': editResource,
-              'uniqueID': uniqueID,
-              'url': url,
-              'url_linktext': url_linktext,
-            }
+            template_values['error'] = 'Resource Name cannot be empty'
             template = JINJA_ENVIRONMENT.get_template('addResource.html')
             self.response.write(template.render(template_values))
             return
 
         if startHourGet > endHourGet or ( startHourGet == endHourGet and startMinuteGet >= endMinuteGet):
-            template_values = {
-              'error': 'End Time must be after the Start Time',
-              'resourceName': resourceNameGet,
-              'startHour': startHourGet,
-              'startMinute': startMinuteGet,
-              'endHour': endHourGet,
-              'endMinute': endMinuteGet,
-              'tags': tagsGet,
-              'editResource': editResource,
-              'uniqueID': uniqueID,
-              'url': url,
-              'url_linktext': url_linktext,
-            }
+            template_values['error'] = 'End Time must be after the Start Time'
             template = JINJA_ENVIRONMENT.get_template('addResource.html')
             self.response.write(template.render(template_values))
             return
@@ -288,11 +281,30 @@ class AddReservation(webapp2.RequestHandler):
         dateYearGet = int(self.request.get('dateYear'))
         dateMonthGet = int(self.request.get('dateMonth'))
         dateDayGet = int(self.request.get('dateDay'))
-        durationGet = int(self.request.get('duration'))
+        duration = self.request.get('duration')
+
+        try:
+            durationGet = int(duration)
+        except ValueError:
+            durationGet = 60
+
         userGet = users.get_current_user()
         resourceUniqueID = self.request.get('resourceUniqueID')
 
         resource = list(Resource.gql("WHERE uniqueID = :1", resourceUniqueID))[0]
+
+        template_values = {}
+        template_values['resource'] = resource
+        template_values['startHour'] = startHourGet
+        template_values['startMinute'] = startMinuteGet
+        template_values['dateYear'] = dateYearGet
+        template_values['dateMonth'] = dateMonthGet
+        template_values['dateDay'] = dateDayGet
+        template_values['resourceUniqueID'] = resourceUniqueID
+        template_values['todaysYear'] = year
+        template_values['duration'] = durationGet
+        template_values['url'] = url
+        template_values['url_linktext'] = url_linktext
 
         try:
             requestReservationStartTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, startHourGet, startMinuteGet)
@@ -300,20 +312,7 @@ class AddReservation(webapp2.RequestHandler):
             requestReservationEndTime = requestReservationStartTime + delta
 
         except ValueError:
-            template_values = {
-              'error': 'Date/duration is incorrect! :)',
-              'startHour': startHourGet,
-              'startMinute': startMinuteGet,
-              'dateYear': dateYearGet,
-              'dateMonth': dateMonthGet,
-              'dateDay': dateDayGet,
-              'resourceUniqueID': resourceUniqueID,
-              'resource': resource,
-              'todaysYear':year,
-              'duration': durationGet,
-              'url': url,
-              'url_linktext': url_linktext,
-            }
+            template_values['error'] = 'Date/duration is incorrect! :)'
             template = JINJA_ENVIRONMENT.get_template('addReservation.html')
             self.response.write(template.render(template_values))
             return
@@ -327,20 +326,7 @@ class AddReservation(webapp2.RequestHandler):
         resourceEndTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, resource.endHour, resource.endMinute)
 
         if requestReservationStartTime < resourceStartTime or requestReservationEndTime > resourceEndTime:
-            template_values = {
-              'error': 'Resource is not available during those times!',
-              'startHour': startHourGet,
-              'startMinute': startMinuteGet,
-              'dateYear': dateYearGet,
-              'dateMonth': dateMonthGet,
-              'dateDay': dateDayGet,
-              'resourceUniqueID': resourceUniqueID,
-              'resource': resource,
-              'todaysYear':year,
-              'duration': durationGet,
-              'url': url,
-              'url_linktext': url_linktext,
-            }
+            template_values['error'] = 'Resource is not available during those times!'
             template = JINJA_ENVIRONMENT.get_template('addReservation.html')
             self.response.write(template.render(template_values))
             return
@@ -351,20 +337,7 @@ class AddReservation(webapp2.RequestHandler):
         todaysDate = todaysDate - delta
 
         if todaysDate > requestReservationStartTime:
-            template_values = {
-              'error': 'Choose a time after the NOW! :)',
-              'startHour': startHourGet,
-              'startMinute': startMinuteGet,
-              'dateYear': dateYearGet,
-              'dateMonth': dateMonthGet,
-              'dateDay': dateDayGet,
-              'resourceUniqueID': resourceUniqueID,
-              'resource': resource,
-              'todaysYear':year,
-              'duration': durationGet,
-              'url': url,
-              'url_linktext': url_linktext,
-            }
+            template_values['error'] = 'Choose a time after the NOW! :)'
             template = JINJA_ENVIRONMENT.get_template('addReservation.html')
             self.response.write(template.render(template_values))
             return
@@ -380,20 +353,7 @@ class AddReservation(webapp2.RequestHandler):
             reservationEndTime = datetime.datetime(dateYearGet, dateMonthGet, dateDayGet, e.endHour, e.endMinute)
 
             if reservationStartTime <= requestReservationEndTime and reservationEndTime >= requestReservationStartTime:
-                template_values = {
-                  'error': 'You already have a reservation during that duration!',
-                  'startHour': startHourGet,
-                  'startMinute': startMinuteGet,
-                  'dateYear': dateYearGet,
-                  'dateMonth': dateMonthGet,
-                  'dateDay': dateDayGet,
-                  'resourceUniqueID': resourceUniqueID,
-                  'resource': resource,
-                  'todaysYear':year,
-                  'duration': durationGet,
-                  'url': url,
-                  'url_linktext': url_linktext,
-                }
+                template_values['error'] = 'You already have a reservation during that duration!'
                 template = JINJA_ENVIRONMENT.get_template('addReservation.html')
                 self.response.write(template.render(template_values))
                 return
@@ -416,21 +376,7 @@ class AddReservation(webapp2.RequestHandler):
         index_list = list(reservations_for_resource)
         if overlapReservation:
             template = JINJA_ENVIRONMENT.get_template('addReservation.html')
-            template_values = {
-                'error': 'This Reservation is not available for that time range.',
-                'startHour': startHourGet,
-                'startMinute': startMinuteGet,
-                'dateYear': dateYearGet,
-                'dateMonth': dateMonthGet,
-                'dateDay': dateDayGet,
-                'resourceUniqueID': resourceUniqueID,
-                'resource': resource,
-                'todaysYear':year,
-                'duration': durationGet,
-                'url': url,
-                'url_linktext': url_linktext,
-            }
-
+            template_values['error'] = 'This Reservation is not available for that time range.'
             self.response.write(template.render(template_values))
         else:
             uniqueID = str(uuid.uuid4())
@@ -439,7 +385,7 @@ class AddReservation(webapp2.RequestHandler):
             requestReservationEndTime = requestReservationStartTime + delta
             endHourGet = int(requestReservationEndTime.hour)
             endMinuteGet = int(requestReservationEndTime.minute)
-            reservation = Reservation(uniqueID=uniqueID, user=userGet, resourceUniqueID=resourceUniqueID, startHour=startHourGet, startMinute=startMinuteGet, endHour=endHourGet, endMinute=endMinuteGet, dateDay=dateDayGet, dateMonth=dateMonthGet, dateYear=dateYearGet, duration=durationGet)
+            reservation = Reservation(uniqueID=uniqueID, user=userGet, name=resource.name, resourceUniqueID=resourceUniqueID, startHour=startHourGet, startMinute=startMinuteGet, endHour=endHourGet, endMinute=endMinuteGet, dateDay=dateDayGet, dateMonth=dateMonthGet, dateYear=dateYearGet, duration=durationGet)
             reservation.put()
             sendEmail(reservation, False)
             self.redirect('/notifyUser?value=reservationAdded&url='+url+'&url_linktext='+url_linktext)
@@ -494,8 +440,7 @@ class ViewResource(webapp2.RequestHandler):
 
         editActive = user == resource.user
 
-        results = list(Reservation.gql("WHERE resourceUniqueID = :1", resource.uniqueID))
-        resource.pastReservationCount = len(results)
+        resource = getNumberOfPastReservations(resource)
 
         template_values = {
             'resource': resource,
@@ -544,9 +489,7 @@ class ViewByTag(webapp2.RequestHandler):
         for x in resourcesToDelete:
             resourcesByTag = [e for e in resourcesByTag if e.uniqueID != x.uniqueID]
 
-        for x in resourcesByTag:
-            results = list(Reservation.gql("WHERE resourceUniqueID = :1", x.uniqueID))
-            x.pastReservationCount = len(results)
+        resourcesByTag = getNumberOfPastReservationsByList(resourcesByTag)
 
         template = JINJA_ENVIRONMENT.get_template('tag.html')
         template_values = {
@@ -594,8 +537,7 @@ class GenerateRSS(webapp2.RequestHandler):
         resource = list(Resource.gql("WHERE uniqueID = :1", resourceUniqueID))[0]
         reservations_for_resource = list(Reservation.gql("WHERE resourceUniqueID = :1", resourceUniqueID))
 
-        results = list(Reservation.gql("WHERE resourceUniqueID = :1", resource.uniqueID))
-        resource.pastReservationCount = len(results)
+        resourcesByTag = getNumberOfPastReservations(resource)
 
         template = JINJA_ENVIRONMENT.get_template('rssGenerator.html')
         template_values = {
@@ -612,9 +554,7 @@ class SearchByName(webapp2.RequestHandler):
         resources = list(Resource.gql(""))
         resources = [ x for x in resources if searchValue.lower() in x.name.lower() ]
 
-        for x in resources:
-            results = list(Reservation.gql("WHERE resourceUniqueID = :1", x.uniqueID))
-            x.pastReservationCount = len(results)
+        resources = getNumberOfPastReservationsByList(resources)
 
         resources.sort(key=lambda x: x.name)
 
@@ -665,9 +605,7 @@ class SearchByAvailability(webapp2.RequestHandler):
             if x not in resourcesHandled:
                 resourceList.append(x)
 
-        for x in resourceList:
-            results = list(Reservation.gql("WHERE resourceUniqueID = :1", x.uniqueID))
-            x.pastReservationCount = len(results)
+        resourceList = getNumberOfPastReservationsByList(resourceList)
 
         resourceList.sort(key=lambda x: x.name)
 

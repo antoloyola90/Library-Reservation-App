@@ -112,9 +112,9 @@
     <p>
     <label id="resourceName">Reservation Duration (in minutes): </label>
       {% if duration %}
-        <input type="text" name="duration"  value="{{ duration }}" />
+        <input type="text" name="duration"  value="{{ duration }}" required/>
       {% else %}
-        <input type="text" name="duration"/>
+        <input type="text" name="duration" value="60" required/>
       {% endif %}  
     </p>
     
