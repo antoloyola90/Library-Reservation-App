@@ -533,20 +533,7 @@ class GenerateRSS(webapp2.RequestHandler):
     def get(self):
         url = users.create_logout_url(self.request.uri)
         url_linktext = 'Logout'
-        resourceUniqueID = self.request.get('resourceUniqueID')
-        resource = list(Resource.gql("WHERE uniqueID = :1", resourceUniqueID))[0]
-        reservations_for_resource = list(Reservation.gql("WHERE resourceUniqueID = :1", resourceUniqueID))
-
-        resourcesByTag = getNumberOfPastReservations(resource)
-
-        template = JINJA_ENVIRONMENT.get_template('rssGenerator.html')
-        template_values = {
-            'resource': resource,
-            'reservations_for_resource': reservations_for_resource,
-            'url': url,
-            'url_linktext': url_linktext,
-        }  
-        self.response.write(template.render(template_values))
+        self.redirect('/notifyUser?value=rssFeatureTurnedOff&url='+url+'&url_linktext='+url_linktext)
 
 class SearchByName(webapp2.RequestHandler):
     def post(self):
